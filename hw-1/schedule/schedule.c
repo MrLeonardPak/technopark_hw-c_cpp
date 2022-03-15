@@ -11,9 +11,9 @@ static const unsigned int kAcademicHourInMinutes = 40;
 static const unsigned int kMinutesInHour = 60;
 static const unsigned int kSecondsInMinute = 60;
 static const unsigned int kHoursInDay = 24;
-static const unsigned int kMaxYear = 4;
-static const unsigned int kMaxGroups = 2;
-static const unsigned int kDaysInWeek = 7;
+static const int kMaxYear = 4;
+static const int kMaxGroups = 2;
+static const int kDaysInWeek = 7;
 static const unsigned int kMinArrSize = 2;
 
 int AddBeginTime(FILE* file, time_t* begin_time) {
