@@ -16,6 +16,8 @@ static const int kMaxGroups = 2;
 static const int kDaysInWeek = 7;
 static const unsigned int kMinArrSize = 2;
 
+extern inline void free_string(char* str);
+extern inline void free_lesson(Lesson* const lesson);
 extern inline void copy_string(char src[], size_t len, char** dst);
 extern inline size_t calculate_group_year_index(int const group,
                                                 int const year);
@@ -216,16 +218,17 @@ int AddLesson(FILE* file, Lessons* lesson) {
   // В начале хранятся все кусры 1 группы, затем все курсы 2 группы ...
   size_t group_year =
       calculate_group_year_index(lesson_buf.group, lesson_buf.year);
-  if (lesson[group_year].real_size == 0) {
+  if ((lesson[group_year].real_size == 0) &&
+      (lesson[group_year].use_size == 0)) {
     lesson[group_year].real_size = kMinArrSize;
     lesson[group_year].lessons =
         (Lesson*)malloc(lesson[group_year].real_size * sizeof(Lesson));
-  }
-  if (lesson[group_year].use_size == lesson[group_year].real_size) {
+  } else if (lesson[group_year].use_size == lesson[group_year].real_size) {
     lesson[group_year].real_size *= 2;
     lesson[group_year].lessons = (Lesson*)realloc(lesson[group_year].lessons,
                                                   lesson[group_year].real_size);
-  }
+  } else
+    return -1;
   ++lesson[group_year].use_size;
   memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1],
          &lesson_buf, sizeof(Lesson));
@@ -287,15 +290,19 @@ int GetGroup(FILE* file, int* group) {
 }
 
 void DeleteSchedule(Lessons** schedule) {
-  size_t size_i = kDaysInWeek * kMaxGroups * kMaxYear;
-  for (size_t i = 0; i < size_i; ++i) {
-    size_t size_j = (*schedule)[i].use_size;
-    for (size_t j = 0; j < size_j; ++j) {
-      free((*schedule)[i].lessons[j].subject);
-      free((*schedule)[i].lessons[j].teacher);
-      free((*schedule)[i].lessons[j].classroom);
+  if (*schedule) {
+    size_t size_i = kDaysInWeek * kMaxGroups * kMaxYear;
+    for (size_t i = 0; i < size_i; ++i) {
+      size_t size_j = (*schedule)[i].use_size;
+      for (size_t j = 0; j < size_j; ++j) {
+        free_lesson(&((*schedule)[i].lessons[j]));
+      }
+      if ((*schedule)[i].lessons) {
+        free((*schedule)[i].lessons);
+        (*schedule)[i].lessons = NULL;
+      }
     }
-    free((*schedule)[i].lessons);
+    free(*schedule);
+    *schedule = NULL;
   }
-  free(*schedule);
 }
