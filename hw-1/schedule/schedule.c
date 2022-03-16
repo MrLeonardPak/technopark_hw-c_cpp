@@ -1,6 +1,9 @@
 #include "schedule.h"
+#include "schedule_private.h"
+
 #include <stdlib.h>
 #include <string.h>
+
 // + 1 для '\0'
 #define MAX_CHARS_IN_SUBJECT 20 + 1
 #define MAX_CHARS_IN_TEACHER 20 + 1
@@ -75,12 +78,6 @@ int AddDuration(FILE* file, time_t* duration) {
     }
   }
   return -1;
-}
-
-static inline void copy_string(char src[], size_t len, char** dst) {
-  src[len - 1] = (src[len - 1] == '\n') ? '\0' : src[len - 1];
-  *dst = (char*)malloc(len * sizeof(char));
-  memcpy(*dst, src, len * sizeof(char));
 }
 
 int AddSubject(FILE* file, char** subject) {
@@ -197,11 +194,6 @@ int CreateSchedule(FILE* file, Lessons** schedule) {
   return 0;
 }
 
-static inline size_t calculate_group_year_index(int const group,
-                                                int const year) {
-  return (year - 1) + (year - 1) * (group - 1);
-}
-
 int AddLesson(FILE* file, Lessons* lesson) {
   static Lesson lesson_buf;
   if (AddBeginTime(file, &lesson_buf.begin_time))
@@ -305,4 +297,14 @@ void DeleteSchedule(Lessons** schedule) {
     free((*schedule)[i].lessons);
   }
   free(*schedule);
+}
+
+inline void copy_string(char src[], size_t len, char** dst) {
+  src[len - 1] = (src[len - 1] == '\n') ? '\0' : src[len - 1];
+  *dst = (char*)malloc(len * sizeof(char));
+  memcpy(*dst, src, len * sizeof(char));
+}
+
+inline size_t calculate_group_year_index(int const group, int const year) {
+  return (year - 1) + (year - 1) * (group - 1);
 }
