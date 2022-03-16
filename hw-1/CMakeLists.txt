@@ -12,3 +12,11 @@ add_executable(${PROJECT_NAME} main.c)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${SCHEDULE_LIB_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SCHEDULE_LIB_LIBRARIES})
+
+option(BUID_TESTS "Do you want to build test?" OFF)
+
+if (BUID_TESTS)
+  add_subdirectory(tests)
+else()
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O2")
+endif()
