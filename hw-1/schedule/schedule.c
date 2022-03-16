@@ -1,9 +1,6 @@
 #include "schedule.h"
 #include "schedule_private.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 // + 1 для '\0'
 #define MAX_CHARS_IN_SUBJECT 20 + 1
 #define MAX_CHARS_IN_TEACHER 20 + 1
@@ -18,6 +15,10 @@ static const int kMaxYear = 4;
 static const int kMaxGroups = 2;
 static const int kDaysInWeek = 7;
 static const unsigned int kMinArrSize = 2;
+
+extern inline void copy_string(char src[], size_t len, char** dst);
+extern inline size_t calculate_group_year_index(int const group,
+                                                int const year);
 
 int AddBeginTime(FILE* file, time_t* begin_time) {
   printf("Start time (format:hh mm):\n");
@@ -297,14 +298,4 @@ void DeleteSchedule(Lessons** schedule) {
     free((*schedule)[i].lessons);
   }
   free(*schedule);
-}
-
-inline void copy_string(char src[], size_t len, char** dst) {
-  src[len - 1] = (src[len - 1] == '\n') ? '\0' : src[len - 1];
-  *dst = (char*)malloc(len * sizeof(char));
-  memcpy(*dst, src, len * sizeof(char));
-}
-
-inline size_t calculate_group_year_index(int const group, int const year) {
-  return (year - 1) + (year - 1) * (group - 1);
 }
