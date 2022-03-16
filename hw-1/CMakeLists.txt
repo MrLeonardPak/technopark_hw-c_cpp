@@ -1,7 +1,19 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(hw-1)
 
-set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wall -Wpedantic -Wextra -Werror")
+option(BUILD_TESTS "Do you want to build test?" OFF)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
+
+if (BUILD_TESTS)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -coverage -lgcov" )
+  set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wall -Wpedantic -Wextra -Werror -fprofile-arcs -ftest-coverage -fPIC -O0")
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall -Wpedantic -Wextra -Werror -fprofile-arcs -ftest-coverage -fPIC -O0")
+else()
+  set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wall -Wpedantic -Wextra -Werror -O2")
+  set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS} "-Wall -Wpedantic -Wextra -Werror -O2")
+endif()
 
 add_subdirectory(schedule)
 
@@ -13,10 +25,6 @@ add_executable(${PROJECT_NAME} main.c)
 target_include_directories(${PROJECT_NAME} PUBLIC ${SCHEDULE_LIB_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SCHEDULE_LIB_LIBRARIES})
 
-option(BUID_TESTS "Do you want to build test?" OFF)
-
-if (BUID_TESTS)
+if (BUILD_TESTS)
   add_subdirectory(tests)
-else()
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O2")
 endif()

@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.14.0)
 project(test_schedule)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fprofile-arcs -ftest-coverage -O0")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -coverage -lgcov" )
-
 file(GLOB SOURCES *.cc)
 file(GLOB INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+
+option(BUILD_GMOCK "Do you want to build gmonk?" OFF)
 
 include(FetchContent)
 FetchContent_Declare(
