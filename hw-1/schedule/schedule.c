@@ -229,8 +229,21 @@ int AddLesson(FILE* file, Lessons* lesson) {
                                                   lesson[group_year].real_size);
   } else
     return -1;
+
   ++lesson[group_year].use_size;
-  memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1],
+  size_t i = 0;
+  if (lesson[group_year].use_size > 1) {
+    for (; (i <= lesson[group_year].use_size - 2) &&
+           (lesson[group_year]
+                .lessons[lesson[group_year].use_size - 2 - i]
+                .begin_time > lesson_buf.begin_time);
+         ++i) {
+      memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1 - i],
+             &lesson[group_year].lessons[lesson[group_year].use_size - 2 - i],
+             sizeof(Lesson));
+    }
+  }
+  memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1 - i],
          &lesson_buf, sizeof(Lesson));
   return 0;
 }
