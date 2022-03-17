@@ -224,8 +224,10 @@ int AddLesson(FILE* file, Lessons* lesson) {
       lesson[group_year].real_size *= 2;
       lesson[group_year].lessons = (Lesson*)realloc(
           lesson[group_year].lessons, lesson[group_year].real_size);
-    } else
+    } else {
+      free_lesson(&lesson_buf);
       return FAILURE;
+    }
 
     ++lesson[group_year].use_size;
     size_t i = 0;
@@ -244,6 +246,7 @@ int AddLesson(FILE* file, Lessons* lesson) {
            &lesson_buf, sizeof(Lesson));
     return SUCCESS;
   }
+  free_lesson(&lesson_buf);
   return FAILURE;
 }
 
