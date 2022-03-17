@@ -20,11 +20,11 @@ typedef struct {
 typedef struct {
   size_t use_size;
   size_t real_size;
-  Lesson* lessons;  // Массив распределения по группа + курс
+  Lesson* lessons;  // Массив предметов для одной группы + курс
 } Lessons;
 
 int CreateSchedule(FILE* file, Lessons** schedule);
 void DeleteSchedule(Lessons** schedule);
-int PrintSchedule(FILE* file, Lessons** schedule);
+int PrintSchedule(FILE* file, Lessons const* schedule);
 
 #endif  // HW1_SCHEDULE_H

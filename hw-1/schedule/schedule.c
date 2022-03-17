@@ -6,6 +6,8 @@
 #define MAX_CHARS_IN_TEACHER 20 + 1
 #define MAX_CHARS_IN_CLASSROOM 5 + 1
 #define MAX_CHARS_IN_BUFFER 20
+#define FAILURE 0
+#define SUCCESS 1
 
 static const unsigned int kAcademicHourInMinutes = 40;
 static const unsigned int kMinutesInHour = 60;
@@ -16,7 +18,7 @@ static const int kMaxGroups = 2;
 static const int kDaysInWeek = 7;
 static const unsigned int kMinArrSize = 2;
 
-extern inline void free_string(char* str);
+extern inline void free_string(char** str);
 extern inline void free_lesson(Lesson* const lesson);
 extern inline void copy_string(char src[], size_t len, char** dst);
 extern inline size_t calculate_group_year_index(int const group,
@@ -34,10 +36,10 @@ int AddBeginTime(FILE* file, time_t* begin_time) {
     check = sscanf(buf, "%u %u", &hh, &mm);
     if ((check == 2) && (hh <= kHoursInDay) && (mm <= kMinutesInHour)) {
       *begin_time = (hh * kMinutesInHour + mm) * kSecondsInMinute;
-      return 0;
+      return SUCCESS;
     }
   }
-  return -1;
+  return FAILURE;
 }
 
 int AddLessonType(FILE* file, LessonType* type) {
@@ -58,12 +60,12 @@ int AddLessonType(FILE* file, LessonType* type) {
           *type = seminar;
           break;
         default:
-          return -1;
+          return FAILURE;
       }
-      return 0;
+      return SUCCESS;
     }
   }
-  return -1;
+  return FAILURE;
 }
 
 int AddDuration(FILE* file, time_t* duration) {
@@ -77,10 +79,10 @@ int AddDuration(FILE* file, time_t* duration) {
     check = sscanf(buf, "%u", &time_buf);
     if ((check == 1) && (time_buf <= kHoursInDay)) {
       *duration = time_buf * kAcademicHourInMinutes * kSecondsInMinute;
-      return 0;
+      return SUCCESS;
     }
   }
-  return -1;
+  return FAILURE;
 }
 
 int AddSubject(FILE* file, char** subject) {
@@ -90,9 +92,9 @@ int AddSubject(FILE* file, char** subject) {
   check = fgets(sub_buf, MAX_CHARS_IN_SUBJECT, file);
   if (check) {
     copy_string(sub_buf, strlen(sub_buf), subject);
-    return 0;
+    return SUCCESS;
   }
-  return -1;
+  return FAILURE;
 }
 
 int AddTeacher(FILE* file, char** teacher) {
@@ -102,9 +104,9 @@ int AddTeacher(FILE* file, char** teacher) {
   check = fgets(teacher_buf, MAX_CHARS_IN_SUBJECT, file);
   if (check) {
     copy_string(teacher_buf, strlen(teacher_buf), teacher);
-    return 0;
+    return SUCCESS;
   }
-  return -1;
+  return FAILURE;
 }
 
 int AddClassroom(FILE* file, char** classroom) {
@@ -115,9 +117,9 @@ int AddClassroom(FILE* file, char** classroom) {
   check = fgets(classroom_buf, MAX_CHARS_IN_CLASSROOM, file);
   if (check) {
     copy_string(classroom_buf, strlen(classroom_buf), classroom);
-    return 0;
+    return SUCCESS;
   }
-  return -1;
+  return FAILURE;
 }
 
 int AddYear(FILE* file, int* year) {
@@ -165,10 +167,10 @@ int GetDay(FILE* file, int* day) {
     check = sscanf(buf, "%d", &day_buf);
     if ((check == 1) && (day_buf <= kDaysInWeek) && (day_buf > 0)) {
       *day = day_buf;
-      return 0;
+      return SUCCESS;
     }
   }
-  return -1;
+  return FAILURE;
 }
 
 int CreateSchedule(FILE* file, Lessons** schedule) {
@@ -179,95 +181,93 @@ int CreateSchedule(FILE* file, Lessons** schedule) {
   int more = 1;
   int day = 0;
   while (more) {
-    if (GetDay(file, &day))
-      return -1;
-    AddLesson(file, schedule[day - 1]);
-    printf("More? (0 - no, 1 - yes)\n");
-    char* check_gets = NULL;
-    char buf[MAX_CHARS_IN_BUFFER] = {0};
-    check_gets = fgets(buf, MAX_CHARS_IN_BUFFER, file);
-    if (check_gets) {
-      int check = -1;
-      check = sscanf(buf, "%d", &more);
-      if (check != 1)
-        return -1;
+    if (GetDay(file, &day)) {
+      if (AddLesson(file, schedule[day - 1])) {
+        printf("More? (0 - no, 1 - yes)\n");
+        char* check_gets = NULL;
+        char buf[MAX_CHARS_IN_BUFFER] = {0};
+        check_gets = fgets(buf, MAX_CHARS_IN_BUFFER, file);
+        if (check_gets) {
+          int check = -1;
+          check = sscanf(buf, "%d", &more);
+          if (check != 1)
+            return FAILURE;
+        } else
+          return FAILURE;
+      } else
+        return FAILURE;
     } else
-      return -1;
+      return FAILURE;
   }
-  return 0;
+  return SUCCESS;
 }
 
 int AddLesson(FILE* file, Lessons* lesson) {
-  static Lesson lesson_buf;
-  if (AddBeginTime(file, &lesson_buf.begin_time))
-    return -1;
-  if (AddLessonType(file, &lesson_buf.type))
-    return -1;
-  if (AddDuration(file, &lesson_buf.duration))
-    return -1;
-  if (AddSubject(file, &lesson_buf.subject))
-    return -1;
-  if (AddTeacher(file, &lesson_buf.teacher))
-    return -1;
-  if (AddClassroom(file, &lesson_buf.classroom))
-    return -1;
-  if (AddYear(file, &lesson_buf.year))
-    return -1;
-  if (AddGroup(file, &lesson_buf.group))
-    return -1;
-  // В начале хранятся все кусры 1 группы, затем все курсы 2 группы ...
-  size_t group_year =
-      calculate_group_year_index(lesson_buf.group, lesson_buf.year);
-  if ((lesson[group_year].real_size == 0) &&
-      (lesson[group_year].use_size == 0)) {
-    lesson[group_year].real_size = kMinArrSize;
-    lesson[group_year].lessons =
-        (Lesson*)malloc(lesson[group_year].real_size * sizeof(Lesson));
-  } else if (lesson[group_year].use_size == lesson[group_year].real_size) {
-    lesson[group_year].real_size *= 2;
-    lesson[group_year].lessons = (Lesson*)realloc(lesson[group_year].lessons,
-                                                  lesson[group_year].real_size);
-  } else
-    return -1;
+  Lesson lesson_buf = {0};
 
-  ++lesson[group_year].use_size;
-  size_t i = 0;
-  if (lesson[group_year].use_size > 1) {
-    for (; (i <= lesson[group_year].use_size - 2) &&
-           (lesson[group_year]
-                .lessons[lesson[group_year].use_size - 2 - i]
-                .begin_time > lesson_buf.begin_time);
-         ++i) {
-      memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1 - i],
-             &lesson[group_year].lessons[lesson[group_year].use_size - 2 - i],
-             sizeof(Lesson));
+  if (AddBeginTime(file, &lesson_buf.begin_time) &&
+      AddLessonType(file, &lesson_buf.type) &&
+      AddDuration(file, &lesson_buf.duration) &&
+      AddSubject(file, &lesson_buf.subject) &&
+      AddTeacher(file, &lesson_buf.teacher) &&
+      AddClassroom(file, &lesson_buf.classroom) &&
+      AddYear(file, &lesson_buf.year) && AddGroup(file, &lesson_buf.group)) {
+    // В начале хранятся все кусры 1 группы, затем все курсы 2 группы ...
+    size_t group_year =
+        calculate_group_year_index(lesson_buf.group, lesson_buf.year);
+    if ((lesson[group_year].real_size == 0) &&
+        (lesson[group_year].use_size == 0)) {
+      lesson[group_year].real_size = kMinArrSize;
+      lesson[group_year].lessons =
+          (Lesson*)malloc(lesson[group_year].real_size * sizeof(Lesson));
+    } else if (lesson[group_year].use_size == lesson[group_year].real_size) {
+      lesson[group_year].real_size *= 2;
+      lesson[group_year].lessons = (Lesson*)realloc(
+          lesson[group_year].lessons, lesson[group_year].real_size);
+    } else
+      return FAILURE;
+
+    ++lesson[group_year].use_size;
+    size_t i = 0;
+    if (lesson[group_year].use_size > 1) {
+      for (; (i <= lesson[group_year].use_size - 2) &&
+             (lesson[group_year]
+                  .lessons[lesson[group_year].use_size - 2 - i]
+                  .begin_time > lesson_buf.begin_time);
+           ++i) {
+        memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1 - i],
+               &lesson[group_year].lessons[lesson[group_year].use_size - 2 - i],
+               sizeof(Lesson));
+      }
     }
+    memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1 - i],
+           &lesson_buf, sizeof(Lesson));
+    return SUCCESS;
   }
-  memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1 - i],
-         &lesson_buf, sizeof(Lesson));
-  return 0;
+  return FAILURE;
 }
 
-int PrintSchedule(FILE* file, Lessons** schedule) {
+int PrintSchedule(FILE* file, Lessons const* schedule) {
   int day = 0;
-  if (GetDay(file, &day))
-    return -1;
-
-  printf("Choose year (max: %u):\n", kMaxYear);
-  int year = 0;
-  if (GetYear(file, &year))
-    return -1;
-
-  printf("Choose group (max: %u):\n", kMaxGroups);
-  int group = 0;
-  if (GetGroup(file, &group))
-    return -1;
-
-  size_t group_year = calculate_group_year_index(group, year);
-  for (size_t i = 0; i < schedule[day - 1][group_year].use_size; ++i) {
-    PrintLesson(&schedule[day - 1][group_year].lessons[i]);
-  }
-  return 0;
+  if (GetDay(file, &day)) {
+    printf("Choose year (max: %u):\n", kMaxYear);
+    int year = 0;
+    if (GetYear(file, &year)) {
+      printf("Choose group (max: %u):\n", kMaxGroups);
+      int group = 0;
+      if (GetGroup(file, &group)) {
+        size_t group_year = calculate_group_year_index(group, year);
+        size_t day_shift = (day - 1) * kMaxGroups * kMaxYear;
+        for (size_t i = 0; i < schedule[day_shift + group_year].use_size; ++i) {
+          PrintLesson(&schedule[day_shift + group_year].lessons[i]);
+        }
+      } else
+        return FAILURE;
+    } else
+      return FAILURE;
+  } else
+    return FAILURE;
+  return SUCCESS;
 }
 
 int GetYear(FILE* file, int* year) {
@@ -280,10 +280,10 @@ int GetYear(FILE* file, int* year) {
     check = sscanf(buf, "%d", &year_buf);
     if ((check == 1) && (year_buf <= kMaxYear) && (year_buf > 0)) {
       *year = year_buf;
-      return 0;
+      return SUCCESS;
     }
   }
-  return -1;
+  return FAILURE;
 }
 
 int GetGroup(FILE* file, int* group) {
@@ -296,10 +296,10 @@ int GetGroup(FILE* file, int* group) {
     check = sscanf(buf, "%d", &group_buf);
     if ((check == 1) && (group_buf <= kMaxGroups) && (group_buf > 0)) {
       *group = group_buf;
-      return 0;
+      return SUCCESS;
     }
   }
-  return -1;
+  return FAILURE;
 }
 
 void DeleteSchedule(Lessons** schedule) {

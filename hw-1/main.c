@@ -24,7 +24,7 @@ int main() {
   FILE* file = stdin;
   static Lessons* schedule = NULL;
   if (CreateSchedule(file, &schedule) == 0) {
-    PrintSchedule(file, &schedule);
+    PrintSchedule(file, schedule);
   };
   DeleteSchedule(&schedule);
   return 0;

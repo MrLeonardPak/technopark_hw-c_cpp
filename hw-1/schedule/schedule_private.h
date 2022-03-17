@@ -20,16 +20,16 @@ int GetGroup(FILE* file, int* group);
 int AddLesson(FILE* file, Lessons* lesson);
 void PrintLesson(Lesson const* lesson);
 
-inline void free_string(char* str) {
-  if (str)
-    free(str);
-  str = NULL;
+inline void free_string(char** str) {
+  if (*str)
+    free(*str);
+  *str = NULL;
 }
 
 inline void free_lesson(Lesson* const lesson) {
-  free_string(lesson->subject);
-  free_string(lesson->teacher);
-  free_string(lesson->classroom);
+  free_string(&lesson->subject);
+  free_string(&lesson->teacher);
+  free_string(&lesson->classroom);
 }
 
 inline void copy_string(char src[], size_t len, char** dst) {
