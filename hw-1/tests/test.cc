@@ -201,12 +201,18 @@ TEST(schedule_TESTS, PrintSchedule_TEST) {
   FILE* stream4 = fmemopen(input4, strlen(input4), "r");
 
   EXPECT_EQ(BAD, PrintSchedule(stream4, schedule));
+
+  char input5[] = "1\n1\n1\n";
+  FILE* stream5 = fmemopen(input5, strlen(input5), "r");
+  memset(&schedule[0].lessons[0].type, 0, sizeof(schedule[0].lessons[0].type));
+  EXPECT_EQ(BAD, PrintSchedule(stream5, schedule));
   ASSERT_NO_THROW(DeleteSchedule(&schedule));
 
   fclose(stream1);
   fclose(stream2);
   fclose(stream3);
   fclose(stream4);
+  fclose(stream5);
 }
 
 TEST(schedule_private_TESTS, PrintLesson_TEST) {
