@@ -132,7 +132,7 @@ int AddGroup(FILE* file, int* group) {
   return GetGroup(file, group);
 }
 
-void PrintLesson(Lesson const* lesson) {
+int PrintLesson(Lesson const* lesson) {
   struct tm* begin_time_buf = gmtime(&(lesson->begin_time));
   printf("Begin time:\t%d:%d\n", begin_time_buf->tm_hour,
          begin_time_buf->tm_min);
@@ -145,6 +145,7 @@ void PrintLesson(Lesson const* lesson) {
       break;
     default:
       printf("Type:\t\tnone\n");
+      return FAILURE;
       break;
   }
   struct tm* duration_buf = gmtime(&(lesson->duration));
@@ -154,6 +155,7 @@ void PrintLesson(Lesson const* lesson) {
   printf("Classroom:\t%s\n", lesson->classroom);
   printf("Year:\t%d\n", lesson->year);
   printf("Group:\t%d\n", lesson->group);
+  return SUCCESS;
 }
 
 int GetDay(FILE* file, int* day) {
@@ -213,18 +215,21 @@ int AddLesson(FILE* file, Lessons* lesson) {
       AddClassroom(file, &lesson_buf.classroom) &&
       AddYear(file, &lesson_buf.year) && AddGroup(file, &lesson_buf.group)) {
     // В начале хранятся все кусры 1 группы, затем все курсы 2 группы ...
+
     size_t group_year =
         calculate_group_year_index(lesson_buf.group, lesson_buf.year);
+
     if ((lesson[group_year].real_size == 0) &&
         (lesson[group_year].use_size == 0)) {
       lesson[group_year].real_size = kMinArrSize;
       lesson[group_year].lessons =
-          (Lesson*)malloc(lesson[group_year].real_size * sizeof(Lesson));
+          (Lesson*)calloc(lesson[group_year].real_size, sizeof(Lesson));
     } else if (lesson[group_year].use_size == lesson[group_year].real_size) {
-      lesson[group_year].real_size *= 2;
-      lesson[group_year].lessons = (Lesson*)realloc(
-          lesson[group_year].lessons, lesson[group_year].real_size);
-    } else {
+      lesson[group_year].real_size *= kMinArrSize;
+      lesson[group_year].lessons =
+          (Lesson*)realloc(lesson[group_year].lessons,
+                           sizeof(Lesson) * lesson[group_year].real_size);
+    } else if (lesson[group_year].use_size > lesson[group_year].real_size) {
       free_lesson(&lesson_buf);
       return FAILURE;
     }
@@ -244,6 +249,7 @@ int AddLesson(FILE* file, Lessons* lesson) {
     }
     memcpy(&lesson[group_year].lessons[lesson[group_year].use_size - 1 - i],
            &lesson_buf, sizeof(Lesson));
+
     return SUCCESS;
   }
   free_lesson(&lesson_buf);
@@ -262,7 +268,9 @@ int PrintSchedule(FILE* file, Lessons const* schedule) {
         size_t group_year = calculate_group_year_index(group, year);
         size_t day_shift = (day - 1) * kMaxGroups * kMaxYear;
         for (size_t i = 0; i < schedule[day_shift + group_year].use_size; ++i) {
-          PrintLesson(&schedule[day_shift + group_year].lessons[i]);
+          if (!PrintLesson(&schedule[day_shift + group_year].lessons[i])) {
+            return FAILURE;
+          }
         }
       } else
         return FAILURE;

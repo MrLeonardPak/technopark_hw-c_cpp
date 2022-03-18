@@ -21,30 +21,6 @@ extern "C" {
 #define GOOD 1
 #define BAD 0
 
-TEST(MAIN_TESTS, RIGHT_INPUT_TEST) {
-  char input[] =
-      "1\n12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n2\n0\n1\n1\n2\n";
-  FILE* stream = fmemopen(input, strlen(input), "r");
-  Lessons* schedule = NULL;
-
-  EXPECT_EQ(GOOD, CreateSchedule(stream, &schedule));
-  EXPECT_EQ(GOOD, PrintSchedule(stream, schedule));
-  ASSERT_NO_THROW(DeleteSchedule(&schedule));
-
-  fclose(stream);
-}
-
-TEST(MAIN_TESTS, WRONG_INPUT_TEST) {
-  char input[] = "1\n12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n2\nq\n";
-  FILE* stream = fmemopen(input, strlen(input), "r");
-  Lessons* schedule = NULL;
-
-  EXPECT_EQ(BAD, CreateSchedule(stream, &schedule));
-  ASSERT_NO_THROW(DeleteSchedule(&schedule));
-
-  fclose(stream);
-}
-
 TEST(schedule_private_TESTS, AddBeginTime_TEST) {
   char input[] = "12 00\n1200\n12:00\nqwerty\n";
   FILE* stream = fmemopen(input, strlen(input), "r");
@@ -153,6 +129,108 @@ TEST(schedule_private_TESTS, GetGroup_TEST) {
   EXPECT_EQ(GOOD, GetGroup(stream, &num));
   EXPECT_EQ(BAD, GetGroup(stream, &num));
   EXPECT_EQ(BAD, GetGroup(stream, &num));
+
+  fclose(stream);
+}
+
+TEST(schedule_private_TESTS, AddLesson_TEST) {
+  char input[] = "12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n2\n";
+  FILE* stream = fmemopen(input, strlen(input), "r");
+  Lessons lesson = {5, 0, NULL};
+  EXPECT_EQ(BAD, AddLesson(stream, &lesson));
+  fclose(stream);
+
+  input[10] = '\n';
+  lesson.use_size = 0;
+  stream = fmemopen(input, strlen(input), "r");
+  EXPECT_EQ(BAD, AddLesson(stream, &lesson));
+
+  fclose(stream);
+}
+
+TEST(schedule_TESTS, CreateSchedule_TEST) {
+  char input1[] = "12\n12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n2\n0\n";
+  FILE* stream1 = fmemopen(input1, strlen(input1), "r");
+  Lessons* schedule = NULL;
+
+  EXPECT_EQ(BAD, CreateSchedule(stream1, &schedule));
+  ASSERT_NO_THROW(DeleteSchedule(&schedule));
+
+  char input2[] = "1\n12:00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n2\n0\n";
+  FILE* stream2 = fmemopen(input2, strlen(input2), "r");
+
+  EXPECT_EQ(BAD, CreateSchedule(stream2, &schedule));
+  ASSERT_NO_THROW(DeleteSchedule(&schedule));
+
+  char input3[] = "1\n12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n2\n";
+  FILE* stream3 = fmemopen(input3, strlen(input3), "r");
+
+  EXPECT_EQ(BAD, CreateSchedule(stream3, &schedule));
+  ASSERT_NO_THROW(DeleteSchedule(&schedule));
+
+  char input4[] = "1\n12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n2\nqwerty\n";
+  FILE* stream4 = fmemopen(input4, strlen(input4), "r");
+
+  EXPECT_EQ(BAD, CreateSchedule(stream4, &schedule));
+  ASSERT_NO_THROW(DeleteSchedule(&schedule));
+
+  fclose(stream1);
+  fclose(stream2);
+  fclose(stream3);
+  fclose(stream4);
+}
+
+TEST(schedule_TESTS, PrintSchedule_TEST) {
+  char input1[] = "1\n12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n1\n0\n";
+  FILE* stream1 = fmemopen(input1, strlen(input1), "r");
+  Lessons* schedule = NULL;
+
+  EXPECT_EQ(GOOD, CreateSchedule(stream1, &schedule));
+
+  char input2[] = "0\n";
+  FILE* stream2 = fmemopen(input2, strlen(input2), "r");
+
+  EXPECT_EQ(BAD, PrintSchedule(stream2, schedule));
+
+  char input3[] = "1\n0\n";
+  FILE* stream3 = fmemopen(input3, strlen(input3), "r");
+
+  EXPECT_EQ(BAD, PrintSchedule(stream3, schedule));
+
+  char input4[] = "1\n1\n0\n";
+  FILE* stream4 = fmemopen(input4, strlen(input4), "r");
+
+  EXPECT_EQ(BAD, PrintSchedule(stream4, schedule));
+  ASSERT_NO_THROW(DeleteSchedule(&schedule));
+
+  fclose(stream1);
+  fclose(stream2);
+  fclose(stream3);
+  fclose(stream4);
+}
+
+TEST(schedule_private_TESTS, PrintLesson_TEST) {
+  char input[] = "12 00\n1\n3\nMath\nVasileva D.S.\n904l\n1\n1\n";
+  FILE* stream = fmemopen(input, strlen(input), "r");
+  Lessons lesson = {0, 0, NULL};
+  lesson.lessons = (Lesson*)calloc(1, sizeof(Lesson));
+  EXPECT_EQ(BAD, PrintLesson(lesson.lessons));
+  free(lesson.lessons);
+  fclose(stream);
+}
+
+TEST(MAIN_TESTS, RIGHT_INPUT_TEST) {
+  char input[] =
+      "1\n15 00\n2\n4\nC++\nZaycev V.K.\n666l\n1\n2\n1\n"
+      "1\n12 00\n1\n2\nMath\nVasileva D.S.\n904l\n1\n2\n1\n"
+      "1\n10 00\n1\n2\nMath\nVasileva D.S.\n904l\n1\n2\n0\n"
+      "1\n1\n2\n";
+  FILE* stream = fmemopen(input, strlen(input), "r");
+  Lessons* schedule = NULL;
+
+  EXPECT_EQ(GOOD, CreateSchedule(stream, &schedule));
+  EXPECT_EQ(GOOD, PrintSchedule(stream, schedule));
+  ASSERT_NO_THROW(DeleteSchedule(&schedule));
 
   fclose(stream);
 }

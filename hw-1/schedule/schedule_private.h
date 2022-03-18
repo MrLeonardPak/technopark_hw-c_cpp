@@ -18,7 +18,7 @@ int GetDay(FILE* file, int* day);
 int GetYear(FILE* file, int* year);
 int GetGroup(FILE* file, int* group);
 int AddLesson(FILE* file, Lessons* lesson);
-void PrintLesson(Lesson const* lesson);
+int PrintLesson(Lesson const* lesson);
 
 inline void free_string(char** str) {
   if (*str)
