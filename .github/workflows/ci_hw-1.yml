@@ -60,3 +60,15 @@ jobs:
         run: |
           cd hw-1/build 
           gcovr --root .. --exclude ../tests --exclude _deps --xml-pretty --output coverage.xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          directory: hw-1/build
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          files: coverage.xml
+          flags: unittests
+          name: codecov-unittests
+          path_to_write_report: hw-1/build/coverage/codecov_report.txt
+          verbose: true
