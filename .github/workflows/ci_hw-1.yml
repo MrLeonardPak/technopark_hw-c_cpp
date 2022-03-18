@@ -55,3 +55,9 @@ jobs:
         run: |
           cd hw-1/build 
           make tests_with_valgrind/fast
+
+      - name: Generate coverage reports
+        run: |
+          cd hw-1/build 
+          lcov -t "tests/tests_schedule" -o coverage.info -c -d schedule/
+          genhtml -o report coverage.info
