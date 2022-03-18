@@ -2,4 +2,4 @@
 
 > Создать структуру для хранения расписания занятий: дня недели, времени начала, вида (лекция, семинар) и продолжительности занятий, названия дисциплины, фамилии преподавателя, номера (шифра) аудитории, курса, группы. Составить с ее использованием программу для определения перемещений по учебному корпусу при посещении всех занятий.
 
-[![codecov](https://codecov.io/gh/MrLeonardPak/technopark_hw-c_cpp/branch/main/graph/badge.svg?token=V7EVIDNX39)](https://codecov.io/gh/MrLeonardPak/technopark_hw-c_cpp)
+[![codecov](https://codecov.io/gh/MrLeonardPak/technopark_hw-c_cpp/branch/hw-1/graph/badge.svg?token=V7EVIDNX39)](https://codecov.io/gh/MrLeonardPak/technopark_hw-c_cpp)
