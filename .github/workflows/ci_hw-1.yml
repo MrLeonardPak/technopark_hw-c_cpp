@@ -41,18 +41,17 @@ jobs:
           cd build
           cmake -DBUILD_TESTS=ON ..
 
-      # - name: tests
-      #   run: |
-      #     tree
-      #     make help
-
       - name: Check code style
         run: |
           cd hw-1/build 
-          make clangformat/fast
+          make clangformat
 
       - name: Make
-        run: make
+        run: |
+          cd hw-1
+          make
 
       - name: Start test with valgrind
-        run: make valgrind/fast
+        run: |
+          cd hw-1/build 
+          make valgrind
