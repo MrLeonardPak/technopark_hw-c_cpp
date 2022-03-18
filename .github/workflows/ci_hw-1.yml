@@ -33,7 +33,7 @@ jobs:
           cd hw-1
           mkdir build
           cd build
-          cmake -DBUILD_TESTS ..
+          cmake -DBUILD_TESTS=ON ..
 
       - name: Check code style
         run: make clangformat/fast
