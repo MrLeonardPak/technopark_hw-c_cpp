@@ -68,4 +68,3 @@ jobs:
           files: hw-1/build/coverage.xml
           flags: unittests
           name: codecov-unittests
-          verbose: true
