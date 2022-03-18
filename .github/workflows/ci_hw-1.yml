@@ -59,7 +59,7 @@ jobs:
       - name: Generate coverage reports
         run: |
           cd hw-1/build 
-          gcovr --root .. --exclude ../tests --exclude _deps --exclude .. --xml-pretty --output coverage.xml
+          gcovr --root .. --exclude ../tests --exclude _deps --exclude-unreachable-branches --xml-pretty --output coverage.xml
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
