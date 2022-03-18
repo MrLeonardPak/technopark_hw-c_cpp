@@ -1,0 +1,71 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI HW-1
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ hw-1 ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build-and-test:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Run a one-line script
+        run: echo Start CI-magic! Puf! Puf! Puf! Puf! Puf!
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade
+          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12 valgrind gcovr
+
+      - name: CMake with option for tests
+        run: |
+          cd hw-1
+          mkdir build
+          cd build
+          cmake -DBUILD_TESTS=ON ..
+
+      - name: Check code style
+        run: |
+          cd hw-1/build 
+          make clangformat/fast
+
+      - name: Make
+        run: |
+          cd hw-1/build 
+          make
+
+      - name: Start test with valgrind
+        run: |
+          cd hw-1/build 
+          make tests_with_valgrind/fast
+
+      - name: Generate coverage reports
+        run: |
+          cd hw-1/build 
+          gcovr --root .. --exclude ../tests --exclude _deps --exclude ../main.c --exclude-unreachable-branches --xml-pretty --output coverage.xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: hw-1/build/coverage.xml
+          flags: unittests
+          name: codecov-unittests
