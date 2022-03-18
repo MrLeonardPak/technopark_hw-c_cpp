@@ -36,7 +36,7 @@ jobs:
           cmake -DBUILD_TESTS=ON ..
 
       - name: Check code style
-        run: make clangformat/fast
+        run: make clangformat
 
       - name: Make
         run: make
