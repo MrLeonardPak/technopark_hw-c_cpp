@@ -41,6 +41,11 @@ jobs:
           cd build
           cmake -DBUILD_TESTS=ON ..
 
+      - name: tests
+        run: |
+          tree
+          make help
+
       - name: Check code style
         run: make clangformat/fast
 
