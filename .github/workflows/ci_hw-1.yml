@@ -48,7 +48,7 @@ jobs:
 
       - name: Make
         run: |
-          cd hw-1
+          cd hw-1/build 
           make
 
       - name: Start test with valgrind
