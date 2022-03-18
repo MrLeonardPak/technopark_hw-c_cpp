@@ -30,9 +30,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-        apt update
-        apt full-upgrade
-        apt install -y cmake build-essential clang-tidy-12 clang-format-12 valgrind
+          apt update
+          apt full-upgrade
+          apt install -y cmake build-essential clang-tidy-12 clang-format-12 valgrind
 
       - name: CMake with option for tests
         run: |
