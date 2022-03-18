@@ -28,11 +28,11 @@ jobs:
       - name: Run a one-line script
         run: echo Start CI-magic! Puf! Puf! Puf! Puf! Puf!
 
-      # - name: Install dependencies
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get upgrade
-      #     sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12 valgrind
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade
+          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12 valgrind
 
       - name: CMake with option for tests
         run: |
@@ -44,7 +44,7 @@ jobs:
       - name: Check code style
         run: |
           cd hw-1/build 
-          make clangformat
+          make clangformat/fast
 
       - name: Make
         run: |
@@ -54,4 +54,4 @@ jobs:
       - name: Start test with valgrind
         run: |
           cd hw-1/build 
-          make tests_with_valgrind
+          make tests_with_valgrind/fast
