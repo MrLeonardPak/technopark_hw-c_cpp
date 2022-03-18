@@ -17,9 +17,6 @@ endif()
 
 add_subdirectory(schedule)
 
-message("SCHEDULE_LIB_INCLUDE_DIRS = ${SCHEDULE_LIB_INCLUDE_DIRS}")
-message("SCHEDULE_LIB_LIBRARIES = ${SCHEDULE_LIB_LIBRARIES}")
-
 add_executable(${PROJECT_NAME} main.c)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${SCHEDULE_LIB_INCLUDE_DIRS})
@@ -28,3 +25,24 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${SCHEDULE_LIB_LIBRARIES})
 if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()
+
+# Add clang-tidy with clang-analyzer (scan-build)
+set(CMAKE_C_CLANG_TIDY 
+  clang-tidy-12;
+  -header-filter=.;
+  -warnings-as-errors=*;
+  -extra-arg=-std=c99;
+  -checks=-*,clang-analyzer-*,-clang-analyzer-cplusplus*)
+
+# Add clang-format-12 to make target
+add_custom_target(
+        clangformat
+        COMMAND clang-format-12
+        -style=Chromium
+        -n
+        --Werror
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.c
+        ${SCHEDULE_LIB_INCLUDE_DIRS}/*.c
+        ${SCHEDULE_LIB_INCLUDE_DIRS}/*.h
+        ${TESTS_SCHEDULE_INCLUDE_DIRS}/*.cc
+)
