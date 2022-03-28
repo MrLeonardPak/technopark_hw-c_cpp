@@ -34,4 +34,4 @@ int DeletePoints(KMeans** kmeans);
 
 int CreatPoints(KMeans** kmeans);
 int StartAlgorithm(KMeans* kmeans);
-void PrintClusters(KMeans const* kmeans);
+int PrintClusters(KMeans const* kmeans);

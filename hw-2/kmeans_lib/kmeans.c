@@ -20,8 +20,6 @@
 
 #include "kmeans.h"
 
-static const float threshold = 0;
-
 /**
  * @brief Квадрат евклидового растояния
  *
@@ -154,88 +152,4 @@ int DeletePoints(KMeans** kmeans) {
 
   *kmeans = tmp_kmeans;
   return SUCCESS;
-}
-
-////////
-int CreatPoints(KMeans** kmeans) {
-  if (*kmeans != NULL) {
-    return FAILURE;
-  }
-  // TODO: Проверить, чтобы кластеров не было больше, чем всего точек
-  KMeans* tmp_kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
-  tmp_kmeans->clusters_cnt = 3;
-  tmp_kmeans->points_cnt = 12;
-  tmp_kmeans->changed = tmp_kmeans->points_cnt;
-  tmp_kmeans->points =
-      (PointInCluster*)malloc(tmp_kmeans->points_cnt * sizeof(PointInCluster));
-  tmp_kmeans->clusters =
-      (Point*)malloc(tmp_kmeans->clusters_cnt * sizeof(Point));
-  for (size_t i = 0; i < 4; i++) {
-    tmp_kmeans->points[i].point.x = rand() % 50;
-    tmp_kmeans->points[i].point.y = rand() % 50;
-    tmp_kmeans->points[i].in_cluster = 0;
-
-    tmp_kmeans->points[i + 4].point.x = 100 + rand() % 50;
-    tmp_kmeans->points[i + 4].point.y = 100 + rand() % 50;
-    tmp_kmeans->points[i + 4].in_cluster = 0;
-
-    tmp_kmeans->points[i + 8].point.x = 1000 + rand() % 50;
-    tmp_kmeans->points[i + 8].point.y = 1000 + rand() % 50;
-    tmp_kmeans->points[i + 8].in_cluster = 0;
-  }
-
-  *kmeans = tmp_kmeans;
-  return SUCCESS;
-}
-
-int StartAlgorithm(KMeans* kmeans) {
-  // За первые точки берутся рандомные точки из данных
-  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-    // TODO: Нельзя, чтобы первые точки были одинаковые
-    kmeans->clusters[i] = kmeans->points[i].point;
-    printf("num: %zu, x: %f, y: %f\n", i, kmeans->clusters[i].x,
-           kmeans->clusters[i].y);
-  }
-  while (((float)kmeans->changed / (float)kmeans->points_cnt) > threshold) {
-    if (ClusterSort(kmeans, 0, kmeans->points_cnt)) {
-      return FAILURE;
-    }
-    for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-      if (FindClusterCenter(kmeans, i)) {
-        return FAILURE;
-      }
-    }
-  }
-
-  return SUCCESS;
-}
-
-void PrintClusters(KMeans const* kmeans) {
-  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-    printf("num: %zu, x: %f, y: %f\n", i, kmeans->clusters[i].x,
-           kmeans->clusters[i].y);
-    for (size_t j = 0; j < kmeans->points_cnt; ++j) {
-      if (kmeans->points[j].in_cluster == i) {
-        printf("x: %f, y: %f\n", kmeans->points[j].point.x,
-               kmeans->points[j].point.y);
-      }
-    }
-  }
-}
-
-int main() {
-  KMeans* kmeans = NULL;
-  if (CreatPoints(&kmeans)) {
-    printf("Bad 1");
-  }
-  if (StartAlgorithm(kmeans)) {
-    printf("Bad 2");
-  }
-
-  PrintClusters(kmeans);
-
-  if (DeletePoints(&kmeans)) {
-    printf("Bad 3");
-  }
-  return 0;
 }
