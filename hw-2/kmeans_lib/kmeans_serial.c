@@ -32,7 +32,6 @@ int CreatPoints(KMeans** kmeans) {
     free(tmp_kmeans);
     return FAILURE;
   }
-  tmp_kmeans->changed = tmp_kmeans->points_cnt;
   tmp_kmeans->points =
       (PointInCluster*)malloc(tmp_kmeans->points_cnt * sizeof(PointInCluster));
   tmp_kmeans->clusters =
@@ -82,9 +81,9 @@ int StartAlgorithm(KMeans* kmeans) {
       }
     }
   }
-
-  while (((float)kmeans->changed / (float)kmeans->points_cnt) > threshold) {
-    if (ClusterSort(kmeans, 0, kmeans->points_cnt)) {
+  size_t changed = kmeans->points_cnt;
+  while (((float)changed / (float)kmeans->points_cnt) > threshold) {
+    if (ClusterSort(kmeans, 0, kmeans->points_cnt, &changed)) {
       return FAILURE;
     }
     for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
