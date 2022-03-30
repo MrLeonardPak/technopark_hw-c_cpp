@@ -10,13 +10,16 @@
  *
  */
 
+#include "kmeans_multiplex.h"
+#include "kmeans.h"
+
+#include <signal.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/msg.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include "kmeans.h"
 
 const float threshold = 0.01;
 
@@ -94,15 +97,14 @@ int DeletePoints(KMeans** kmeans) {
   return SUCCESS;
 }
 
-#define MAX_SEND_SIZE 80
-#define SORT_MSG 100
-#define CENTER_MSG 200
-
-typedef struct MsgBuf {
-  long mtype;
-  char mtext[MAX_SEND_SIZE];
-} MsgBuf;
-
+/**
+ * @brief Отправка сообщения в очередь с ожиданием
+ *
+ * @param qid
+ * @param type
+ * @param text
+ * @return int
+ */
 int SendMessage(int qid, long type, char* text) {
   static MsgBuf q_buf;
   q_buf.mtype = type;
@@ -113,6 +115,13 @@ int SendMessage(int qid, long type, char* text) {
   return SUCCESS;
 }
 
+/**
+ * @brief Чтение сообщения из очереди с ожиданием
+ *
+ * @param qid
+ * @param text
+ * @param type
+ */
 void ReadMessage(int qid, char* text, long type) {
   static MsgBuf q_buf;
   q_buf.mtype = type;
