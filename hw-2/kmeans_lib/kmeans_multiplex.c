@@ -129,6 +129,61 @@ void ReadMessage(int qid, char* text, long type) {
   strcpy(text, q_buf.mtext);
 }
 
+static int phase_num = 0;
+
+void Handler(int sig_num) {
+  switch (sig_num) {
+    case SIGUSR1:
+      phase_num = 1;
+      break;
+    case SIGUSR2:
+      phase_num = 2;
+      break;
+    default:
+      signal(sig_num, SIG_DFL);
+      break;
+  }
+}
+
+void StartChildWork(int msgid) {
+  char recv_tmp[MAX_SEND_SIZE] = {0};
+  // Для синхронизации с родителем
+  signal(SIGUSR1, Handler);
+  signal(SIGUSR2, Handler);
+  raise(SIGSTOP);
+  // Дочерние процессы работают как конечный автомат
+  while (1) {
+    switch (phase_num) {
+      case 1:
+        // Фаза 1: сортируем по кластерам
+        ReadMessage(msgid, recv_tmp, SORT_MSG);
+        size_t start_batch = 0;
+        size_t end_batch = 0;
+        sscanf(recv_tmp, "%zu %zu", &start_batch, &end_batch);
+        printf("Received %zu %zu\n", start_batch, end_batch);
+        // TODO: Сделать что-то существенное
+        SendMessage(msgid, TO_PARENT_MSG, "ok");
+        phase_num = 0;
+        break;
+      case 2:
+        // Фаза 2: Поиск центров кластеров
+        ReadMessage(msgid, recv_tmp, CENTER_MSG);
+        size_t cnt = 0;
+        sscanf(recv_tmp, "%zu", &cnt);
+        printf("Received %zu\n", cnt);
+        // TODO: Сделать что-то существенное
+        SendMessage(msgid, TO_PARENT_MSG, "ok");
+        phase_num = 0;
+        break;
+      default:
+        break;
+    }
+  }
+
+  // Сюда 0 вероятность прийти, вырубает процесс родитель
+  exit(0);
+}
+
 /**
  * @brief Запуск алгоритма
  *
@@ -145,7 +200,7 @@ int StartAlgorithm(KMeans* kmeans) {
   size_t process_cnt = kmeans->clusters_cnt;
   int pids[process_cnt];
   // HACK: Стоит проверить успех создания очереди
-  int msdid = msgget(IPC_PRIVATE, IPC_CREAT | 0660);
+  int msgid = msgget(IPC_PRIVATE, IPC_CREAT | 0660);
   for (size_t i = 0; i < process_cnt; ++i) {
     pids[i] = fork();
     if (pids[i] == -1) {
@@ -153,27 +208,26 @@ int StartAlgorithm(KMeans* kmeans) {
       // HACK: Стоит убить уже созданные процессы
       return FAILURE;
     } else if (pids[i] == 0) {
-      char recv_tmp[MAX_SEND_SIZE] = {0};
-      // Фаза 1: сортируем по кластерам
-      ReadMessage(msdid, recv_tmp, SORT_MSG);
-      size_t start_batch = 0;
-      size_t end_batch = 0;
-      sscanf(recv_tmp, "%zu %zu", &start_batch, &end_batch);
-      printf("Received %zu %zu\n", start_batch, end_batch);
-      // TODO: Надо синхронизировать. (Возможно, ещё нужны прерывания).
-      // Фаза 2: Поиск центров кластеров
-      ReadMessage(msdid, recv_tmp, CENTER_MSG);
-      size_t cnt = 0;
-      sscanf(recv_tmp, "%zu", &cnt);
-      printf("Received %zu\n", cnt);
-      // TODO: Вырубаемся по команде родителя
-      exit(0);
+      StartChildWork(msgid);
+    } else {
+      printf("Created process = %d\n", pids[i]);
     }
   }
-
   char send_tmp[MAX_SEND_SIZE] = {0};
+  char recv_tmp[MAX_SEND_SIZE] = {0};
+  // Ждем, пока каждый процесс закончит свою инициализацию
+  for (size_t i = 0; i < process_cnt; ++i) {
+    int status = 0;
+    waitpid(-1, &status, WUNTRACED);
+  }
+  // Продолжаем работу всех детей
+  kill(0, SIGCONT);
+
   // while (((float)kmeans->changed / (float)kmeans->points_cnt) > threshold) {
-  // Отправляем сообщения по количеству процессов
+  // Начинаем фазу 1: сортировки точек по кластерам
+  for (size_t i = 0; i < process_cnt; ++i) {
+    kill(pids[i], SIGUSR1);
+  }
   size_t start_batch = 0;
   size_t end_batch = 0;
   for (size_t i = 0; i < process_cnt; ++i) {
@@ -183,21 +237,37 @@ int StartAlgorithm(KMeans* kmeans) {
     end_batch =
         start_batch + (kmeans->points_cnt - start_batch) / (process_cnt - i);
     snprintf(send_tmp, MAX_SEND_SIZE, "%zu %zu", start_batch, end_batch);
-    SendMessage(msdid, SORT_MSG, send_tmp);
+    // HACK: Стоит проверить на возврат с ошибкой
+    SendMessage(msgid, SORT_MSG, send_tmp);
+    printf("Send %zu %zu\n", start_batch, end_batch);
   }
-  // TODO: Надо синхронизировать
+  // TODO: Получить ответ о завершении фазы от детей
+  for (size_t i = 0; i < process_cnt; ++i) {
+    ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
+  }
+  // Начинаем фазу 2: поиск центра для каждого кластера
+  for (size_t i = 0; i < process_cnt; ++i) {
+    // HACK: Стоит проверить на возврат с ошибкой
+    kill(pids[i], SIGUSR2);
+  }
   for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
     snprintf(send_tmp, MAX_SEND_SIZE, "%zu", i);
-    SendMessage(msdid, CENTER_MSG, send_tmp);
+    // HACK: Стоит проверить на возврат с ошибкой
+    SendMessage(msgid, CENTER_MSG, send_tmp);
+  }
+  // TODO: Получить ответ о завершении фазы от детей
+  for (size_t i = 0; i < process_cnt; ++i) {
+    ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
   }
   // }
 
   for (size_t i = 0; i < process_cnt; ++i) {
-    int status = 0;
-    pid_t waited_pid = wait(&status);
-    printf("Got waited_pid=%d, status %d\n", waited_pid, status);
+    // HACK: Стоит проверить на возврат с ошибкой
+    kill(pids[i], SIGKILL);
+    printf("Killed %d\n", pids[i]);
   }
-
+  // HACK: Стоит проверить на возврат с ошибкой
+  msgctl(msgid, IPC_RMID, NULL);
   return SUCCESS;
 }
 
@@ -228,9 +298,9 @@ int main() {
     printf("Bad 2");
   }
 
-  if (PrintClusters(kmeans)) {
-    printf("Bad 3");
-  }
+  // if (PrintClusters(kmeans)) {
+  //   printf("Bad 3");
+  // }
 
   if (DeletePoints(&kmeans)) {
     printf("Bad 4");
