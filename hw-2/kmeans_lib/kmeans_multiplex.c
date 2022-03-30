@@ -230,8 +230,8 @@ int StartAlgorithm(KMeans* kmeans) {
   }
   // Продолжаем работу всех детей
   kill(0, SIGCONT);
-  size_t changed = kmeans->points_cnt;
-  while (((float)changed / (float)kmeans->points_cnt) > threshold) {
+  size_t changed = 0;
+  do {
     // for (size_t kl = 0; kl < 3; kl++) {
     // Начинаем фазу 1: сортировки точек по кластерам
     for (size_t i = 0; i < process_cnt; ++i) {
@@ -271,7 +271,7 @@ int StartAlgorithm(KMeans* kmeans) {
     for (size_t i = 0; i < process_cnt; ++i) {
       ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
     }
-  }
+  } while (((float)changed / (float)kmeans->points_cnt) > threshold);
 
   for (size_t i = 0; i < process_cnt; ++i) {
     // HACK: Стоит проверить на возврат с ошибкой

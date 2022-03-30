@@ -81,8 +81,8 @@ int StartAlgorithm(KMeans* kmeans) {
       }
     }
   }
-  size_t changed = kmeans->points_cnt;
-  while (((float)changed / (float)kmeans->points_cnt) > threshold) {
+  size_t changed = 0;
+  do {
     if (ClusterSort(kmeans, 0, kmeans->points_cnt, &changed)) {
       return FAILURE;
     }
@@ -91,7 +91,7 @@ int StartAlgorithm(KMeans* kmeans) {
         return FAILURE;
       }
     }
-  }
+  } while (((float)changed / (float)kmeans->points_cnt) > threshold);
 
   return SUCCESS;
 }
