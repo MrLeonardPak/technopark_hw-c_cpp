@@ -65,7 +65,7 @@ int StartAlgorithm(KMeans* kmeans) {
   for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
     kmeans->clusters[i] = kmeans->points[i].point;
   }
-  // FIXME: (Можно убрать) Нельзя, чтобы первые точки были одинаковые
+  // HACK: (Можно убрать) Нельзя, чтобы первые точки были одинаковые
   for (size_t i = 0, k = 0; i < kmeans->clusters_cnt; ++i) {
     for (size_t j = i + 1; j < kmeans->clusters_cnt; j++) {
       if ((kmeans->clusters[j].x == kmeans->clusters[i].x) &&
