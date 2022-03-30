@@ -11,7 +11,7 @@
 
 #include "kmeans.h"
 
-static const float threshold = 0.01;
+const float threshold = 0.01;
 
 /**
  * @brief Создает специальную структуру из TODO:
@@ -112,6 +112,33 @@ int PrintClusters(KMeans const* kmeans) {
       }
     }
   }
+  return SUCCESS;
+}
+
+/**
+ * @brief Аккуратное удаление выделенной памяти
+ *
+ * @param kmeans
+ * @return int
+ */
+int DeletePoints(KMeans** kmeans) {
+  if ((kmeans == NULL) || (*kmeans == NULL)) {
+    return FAILURE;
+  }
+
+  KMeans* tmp_kmeans = *kmeans;
+  if (tmp_kmeans->points != NULL) {
+    free(tmp_kmeans->points);
+    tmp_kmeans->points = NULL;
+  }
+  if (tmp_kmeans->clusters != NULL) {
+    free(tmp_kmeans->clusters);
+    tmp_kmeans->clusters = NULL;
+  }
+  free(tmp_kmeans);
+  tmp_kmeans = NULL;
+
+  *kmeans = tmp_kmeans;
   return SUCCESS;
 }
 

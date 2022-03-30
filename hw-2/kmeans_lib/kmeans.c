@@ -114,42 +114,11 @@ int FindClusterCenter(KMeans const* kmeans, size_t cluster_num) {
       ++point_in_cluster_cnt;
     }
   }
-  if (point_in_cluster_cnt == 0) {
-    kmeans->clusters[cluster_num].x = 0;
-    kmeans->clusters[cluster_num].y = 0;
-    kmeans->clusters[cluster_num].z = 0;
-  } else {
+  if (point_in_cluster_cnt > 0) {
     kmeans->clusters[cluster_num].x = sum.x / point_in_cluster_cnt;
     kmeans->clusters[cluster_num].y = sum.y / point_in_cluster_cnt;
     kmeans->clusters[cluster_num].z = sum.z / point_in_cluster_cnt;
   }
 
-  return SUCCESS;
-}
-
-/**
- * @brief Аккуратное удаление выделенной памяти
- *
- * @param kmeans
- * @return int
- */
-int DeletePoints(KMeans** kmeans) {
-  if ((kmeans == NULL) || (*kmeans == NULL)) {
-    return FAILURE;
-  }
-
-  KMeans* tmp_kmeans = *kmeans;
-  if (tmp_kmeans->points != NULL) {
-    free(tmp_kmeans->points);
-    tmp_kmeans->points = NULL;
-  }
-  if (tmp_kmeans->clusters != NULL) {
-    free(tmp_kmeans->clusters);
-    tmp_kmeans->clusters = NULL;
-  }
-  free(tmp_kmeans);
-  tmp_kmeans = NULL;
-
-  *kmeans = tmp_kmeans;
   return SUCCESS;
 }
