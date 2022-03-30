@@ -1,3 +1,5 @@
+#ifndef HW2_KMEANS_H
+#define HW2_KMEANS_H
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -35,3 +37,5 @@ int DeletePoints(KMeans** kmeans);
 int CreatPoints(KMeans** kmeans);
 int StartAlgorithm(KMeans* kmeans);
 int PrintClusters(KMeans const* kmeans);
+
+#endif  // HW2_KMEANS_H
