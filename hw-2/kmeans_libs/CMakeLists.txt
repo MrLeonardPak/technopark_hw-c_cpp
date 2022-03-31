@@ -5,6 +5,7 @@ option(MULTI "Do you want to run multiplex variant?" OFF)
 
 set(KMEANS_LIB_LIBRARIES)
 set(KMEANS_LIB_INCLUDE_DIRS)
+set(KMEANS_LIB_SOURCES)
 
 if (MULTI)
   file(GLOB SOURCES src/kmeans.c src/kmeans_multiplex.c)
@@ -20,3 +21,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRS})
 
 set(KMEANS_LIB_LIBRARIES ${PROJECT_NAME} PARENT_SCOPE)
 set(KMEANS_LIB_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
+set(KMEANS_LIB_SOURCES ${SOURCES} PARENT_SCOPE)
