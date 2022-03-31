@@ -298,21 +298,3 @@ int StartAlgorithm(KMeans* kmeans) {
   msgctl(msgid, IPC_RMID, NULL);
   return SUCCESS;
 }
-
-int PrintClusters(KMeans const* kmeans) {
-  if (kmeans == NULL) {
-    return FAILURE;
-  }
-
-  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-    printf("num: %zu, x: %f, y: %f\n", i, kmeans->clusters[i].x,
-           kmeans->clusters[i].y);
-    for (size_t j = 0; j < kmeans->points_cnt; ++j) {
-      if (kmeans->points[j].in_cluster == i) {
-        printf("x: %f, y: %f\n", kmeans->points[j].point.x,
-               kmeans->points[j].point.y);
-      }
-    }
-  }
-  return SUCCESS;
-}
