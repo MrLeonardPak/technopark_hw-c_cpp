@@ -27,7 +27,7 @@ jobs:
       - name: Code Style
         run: |
           cd hw-2/build 
-          make clangformat/fast
+          make clangformat
       - name: Make
         run: |
           cd hw-2/build 
@@ -75,11 +75,11 @@ jobs:
       - name: Code Style
         run: |
           cd hw-2/build 
-          make clangformat/fast
+          make clangformat
       - name: Make
         run: |
           cd hw-2/build 
-          make
+          make -j8
   multiprocess-test:
     runs-on: ubuntu-latest
     needs: [multiprocess-build]
