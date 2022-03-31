@@ -33,15 +33,15 @@ jobs:
 
       - name: Check code style
         run: |
-          cd hw-1/build 
+          cd hw-2/build 
           make clangformat/fast
 
       - name: Make
         run: |
-          cd hw-1/build 
+          cd hw-2/build 
           make
 
       - name: Start test
         run: |
-          cd hw-1/build 
+          cd hw-2/build 
           ./tests/test_kmeans
