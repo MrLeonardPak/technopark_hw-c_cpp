@@ -10,8 +10,7 @@
  *
  */
 
-#include "kmeans_multiplex.h"
-#include "kmeans.h"
+#include "../inc/kmeans.h"
 
 #include <signal.h>
 #include <string.h>
@@ -20,6 +19,17 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#define MAX_SEND_SIZE 80
+
+#define SORT_MSG 100
+#define CENTER_MSG 200
+#define TO_PARENT_MSG 300
+
+typedef struct MsgBuf {
+  long mtype;
+  char mtext[MAX_SEND_SIZE];
+} MsgBuf;
 
 const float threshold = 0;
 static int phase_num = 0;
@@ -150,6 +160,7 @@ void ReadMessage(int qid, char* text, long type) {
  * @param kmeans
  */
 void StartChildWork(int msgid, KMeans* kmeans) {
+  puts("Child start");
   char send_tmp[MAX_SEND_SIZE] = {0};
   char recv_tmp[MAX_SEND_SIZE] = {0};
   // Для синхронизации с родителем
@@ -304,23 +315,4 @@ int PrintClusters(KMeans const* kmeans) {
     }
   }
   return SUCCESS;
-}
-
-int main() {
-  KMeans* kmeans = NULL;
-  if (CreatPoints(&kmeans)) {
-    printf("Bad 1");
-  }
-  if (StartAlgorithm(kmeans)) {
-    printf("Bad 2");
-  }
-
-  if (PrintClusters(kmeans)) {
-    printf("Bad 3");
-  }
-
-  if (DeletePoints(&kmeans)) {
-    printf("Bad 4");
-  }
-  return 0;
 }

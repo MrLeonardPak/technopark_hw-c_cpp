@@ -9,7 +9,7 @@
  *
  */
 
-#include "kmeans.h"
+#include "../inc/kmeans.h"
 
 const float threshold = 0.01;
 
@@ -139,23 +139,4 @@ int DeletePoints(KMeans** kmeans) {
 
   *kmeans = tmp_kmeans;
   return SUCCESS;
-}
-
-int main() {
-  KMeans* kmeans = NULL;
-  if (CreatPoints(&kmeans)) {
-    printf("Bad 1");
-  }
-  if (StartAlgorithm(kmeans)) {
-    printf("Bad 2");
-  }
-
-  if (PrintClusters(kmeans)) {
-    printf("Bad 3");
-  }
-
-  if (DeletePoints(&kmeans)) {
-    printf("Bad 4");
-  }
-  return 0;
 }

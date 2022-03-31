@@ -12,6 +12,23 @@
  *
  */
 
+#include "kmeans.h"
+
 int main() {
+  KMeans* kmeans = NULL;
+  if (CreatPoints(&kmeans)) {
+    printf("Bad 1");
+  }
+  if (StartAlgorithm(kmeans)) {
+    printf("Bad 2");
+  }
+
+  if (PrintClusters(kmeans)) {
+    printf("Bad 3");
+  }
+
+  if (DeletePoints(&kmeans)) {
+    printf("Bad 4");
+  }
   return 0;
 }
