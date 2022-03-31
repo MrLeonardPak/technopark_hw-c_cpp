@@ -62,9 +62,9 @@ int ClusterSort(KMeans* kmeans,
 
   *changed_test = 0;
   for (size_t i = batch_start; i < batch_end; ++i) {
-    float dist_min = 0;
+    int dist_min = 0;
     size_t near_cluster = 0;
-    float tmp = 0;
+    int tmp = 0;
     // Поиск ближайшего кластера.
     // Инициализация поиска минимума
     if (SquareEuclideanDistance(&kmeans->points[i].point, &kmeans->clusters[0],
