@@ -31,7 +31,7 @@
 int SquareEuclideanDistance(Point const* point_a,
                             Point const* point_b,
                             float* out) {
-  if (out == NULL) {
+  if ((out == NULL) || (point_a == NULL) || (point_b == NULL)) {
     return FAILURE;
   }
 
