@@ -31,7 +31,7 @@ jobs:
       - name: Make
         run: |
           cd hw-2/build 
-          make
+          make -j$(nproc)
   serial-test:
     runs-on: ubuntu-latest
     needs: [serial-build]
@@ -51,7 +51,7 @@ jobs:
       - name: Make
         run: |
           cd hw-2/build 
-          make
+          make -j$(nproc)
       - name: TESTS
         run: |
           cd hw-2/build 
@@ -79,7 +79,7 @@ jobs:
       - name: Make
         run: |
           cd hw-2/build 
-          make -j8
+          make -j$(nproc)
   multiprocess-test:
     runs-on: ubuntu-latest
     needs: [multiprocess-build]
@@ -99,7 +99,7 @@ jobs:
       - name: Make
         run: |
           cd hw-2/build 
-          make
+          make -j$(nproc)
       - name: TESTS
         run: |
           cd hw-2/build 
