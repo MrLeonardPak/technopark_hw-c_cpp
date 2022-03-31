@@ -9,9 +9,9 @@
 #define SUCCESS 0
 
 typedef struct Point {
-  float x;
-  float y;
-  float z;
+  int x;
+  int y;
+  int z;
 } Point;
 
 typedef struct PointInCluster {
@@ -28,7 +28,7 @@ typedef struct KMeans {
 
 int SquareEuclideanDistance(Point const* point_a,
                             Point const* point_b,
-                            float* out);
+                            int* out);
 int ClusterSort(KMeans* kmeans,
                 size_t batch_start,
                 size_t batch_end,

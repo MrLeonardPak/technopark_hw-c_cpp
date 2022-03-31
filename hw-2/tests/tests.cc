@@ -20,8 +20,8 @@ extern "C" {
 TEST(KMEANS_TESTS, SquareEuclideanDistance_TEST) {
   Point points_a[] = {{0, 0, 0}, {1, 2, 3}};
   Point points_b[] = {{0, 0, 0}, {3, 2, 1}};
-  float right_answers[] = {0, 8};
-  float answer = 0;
+  int right_answers[] = {0, 8};
+  int answer = 0;
 
   EXPECT_EQ(SUCCESS,
             SquareEuclideanDistance(&points_a[0], &points_b[0], &answer));
