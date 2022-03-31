@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get upgrade
+          sudo apt-get update
           sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12
 
       - name: CMake with option for tests
