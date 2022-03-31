@@ -114,4 +114,4 @@ jobs:
       - name: TESTS
         run: |
           cd hw-2/build 
-          ./tests/test_kmeans
+          make tests_with_valgrind

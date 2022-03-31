@@ -56,6 +56,8 @@ TEST(KMEANS_TESTS, FindClusterCentere_TEST) {
   EXPECT_EQ(right_answers.y, kmeans->clusters[0].y);
   EXPECT_EQ(right_answers.z, kmeans->clusters[0].z);
 
+  free(kmeans->clusters);
+  free(kmeans->points);
   free(kmeans);
 }
 
@@ -68,6 +70,8 @@ TEST(KMEANS_TESTS, ClusterSort_TEST) {
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, 1, NULL));
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, kmeans->points_cnt + 1, &changed));
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 1, 0, &changed));
+
+  free(kmeans);
 }
 
 TEST(KMEANS_TESTS, MAIN_TEST) {

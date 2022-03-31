@@ -28,10 +28,7 @@ set(TESTS_KMEANS_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
 # Add valgrind to make target
 add_custom_target(
         tests_with_valgrind
-        COMMAND make
-        -j8
-        &&
-        valgrind
+        COMMAND valgrind
         --tool=memcheck
         --leak-check=yes
         --error-exitcode=1

@@ -245,7 +245,10 @@ int StartAlgorithm(KMeans* kmeans) {
     waitpid(-1, &status, WUNTRACED);
   }
   // Продолжаем работу всех детей
-  kill(0, SIGCONT);
+  for (size_t i = 0; i < process_cnt; ++i) {
+    kill(pids[i], SIGCONT);
+  }
+
   size_t changed = 0;
   do {
     // for (size_t kl = 0; kl < 3; kl++) {
