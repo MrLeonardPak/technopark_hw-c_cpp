@@ -64,7 +64,8 @@ jobs:
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@master
         with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: hw-2/build/coverage.info
 
   # Сборка многопроцессоной реализации
   multiprocess-build:
