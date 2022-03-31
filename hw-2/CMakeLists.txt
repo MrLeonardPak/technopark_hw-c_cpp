@@ -49,7 +49,7 @@ if(WITH_STATIC_CHECKS)
           ${CMAKE_CURRENT_SOURCE_DIR}/*.c
           ${KMEANS_LIB_INCLUDE_DIRS}/*.h
           ${KMEANS_LIB_SOURCES}
-          ${TESTS_SCHEDULE_INCLUDE_DIRS}/*.cc
+          ${TESTS_KMEANS_INCLUDE_DIRS}/*.cc
   )
 endif()
 
