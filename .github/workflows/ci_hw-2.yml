@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12 lcov
+          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12 lcov valgrind
       - name: CMake with option for tests
         run: |
           cd hw-2
@@ -100,7 +100,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12
+          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12 lcov valgrind
       - name: CMake with option for tests
         run: |
           cd hw-2
