@@ -58,3 +58,14 @@ TEST(KMEANS_TESTS, FindClusterCentere_TEST) {
 
   free(kmeans);
 }
+
+TEST(KMEANS_TESTS, ClusterSort_TEST) {
+  KMeans* kmeans = (KMeans*)calloc(1, sizeof(KMeans));
+  kmeans->points_cnt = 3;
+  size_t changed = 0;
+  // Проверка на передачу NULL
+  EXPECT_EQ(FAILURE, ClusterSort(NULL, 0, 1, &changed));
+  EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, 1, NULL));
+  EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, kmeans->points_cnt + 1, &changed));
+  EXPECT_EQ(FAILURE, ClusterSort(kmeans, 1, 0, &changed));
+}

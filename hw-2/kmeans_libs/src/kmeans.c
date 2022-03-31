@@ -54,13 +54,13 @@ int SquareEuclideanDistance(Point const* point_a,
 int ClusterSort(KMeans* kmeans,
                 size_t batch_start,
                 size_t batch_end,
-                size_t* changed_test) {
+                size_t* changed) {
   if ((kmeans == NULL) || (batch_end > kmeans->points_cnt) ||
-      (batch_start > batch_end)) {
+      (batch_start > batch_end) || (changed == NULL)) {
     return FAILURE;
   }
 
-  *changed_test = 0;
+  *changed = 0;
   for (size_t i = batch_start; i < batch_end; ++i) {
     int dist_min = 0;
     size_t near_cluster = 0;
@@ -87,7 +87,7 @@ int ClusterSort(KMeans* kmeans,
     // Заносим номер кластера в точку
     if (kmeans->points[i].in_cluster != near_cluster) {
       kmeans->points[i].in_cluster = near_cluster;
-      ++(*changed_test);
+      ++(*changed);
     }
   }
 
