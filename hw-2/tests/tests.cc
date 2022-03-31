@@ -2,7 +2,7 @@
  * @file test.cc
  * @author your name (you@domain.com)
  * @brief
- * lcov -t "tests/tests_schedule" -o coverage.info -c -d schedule/
+ * lcov -t "tests/tests_kmeans" -o coverage.info -c -d kmeans_libs/
  * genhtml -o report coverage.info
  * cd report && python3 -m http.server 8000
  * @version 0.1
@@ -73,15 +73,7 @@ TEST(KMEANS_TESTS, ClusterSort_TEST) {
 TEST(KMEANS_TESTS, MAIN_TEST) {
   KMeans* kmeans = NULL;
   EXPECT_EQ(SUCCESS, CreatPoints(&kmeans));
-  if (StartAlgorithm(kmeans)) {
-    printf("Bad 2");
-  }
-
-  if (PrintClusters(kmeans)) {
-    printf("Bad 3");
-  }
-
-  if (DeletePoints(&kmeans)) {
-    printf("Bad 4");
-  }
+  EXPECT_EQ(SUCCESS, StartAlgorithm(kmeans));
+  EXPECT_EQ(SUCCESS, PrintClusters(kmeans));
+  EXPECT_EQ(SUCCESS, DeletePoints(&kmeans));
 }
