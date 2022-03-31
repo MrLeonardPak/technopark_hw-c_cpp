@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(kmeans_lib)
 
-option(MULTI "Do you want to run multiplex variant?" OFF)
+option(MULTIPROCESS "Do you want to run multiprocessing?" OFF)
 
 set(KMEANS_LIB_LIBRARIES)
 set(KMEANS_LIB_INCLUDE_DIRS)
 set(KMEANS_LIB_SOURCES)
 
-if (MULTI)
-  file(GLOB SOURCES src/kmeans.c src/kmeans_multiplex.c)
+if (MULTIPROCESS)
+  file(GLOB SOURCES src/kmeans.c src/kmeans_multiprocess.c)
   file(GLOB INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/inc)
   add_library(${PROJECT_NAME} STATIC ${SOURCES})
 else()
