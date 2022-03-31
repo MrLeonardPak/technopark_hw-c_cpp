@@ -25,35 +25,31 @@ int CreatPoints(KMeans** kmeans) {
   }
   // TODO: Переписать под прием из файла
   KMeans* tmp_kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
-  tmp_kmeans->clusters_cnt = 3;
-  tmp_kmeans->points_cnt = 12;
+  FILE* file;
+  file = fopen("../tmp.txt", "r");
+  if (file == NULL) {
+    puts("No file");
+    return FAILURE;
+  }
+
+  fscanf(file, "%zu %zu", &tmp_kmeans->points_cnt, &tmp_kmeans->clusters_cnt);
+
   // Кластеров не должно быть больше, чем самих точек
   if (tmp_kmeans->clusters_cnt > tmp_kmeans->points_cnt) {
     free(tmp_kmeans);
     return FAILURE;
   }
   tmp_kmeans->points =
-      (PointInCluster*)malloc(tmp_kmeans->points_cnt * sizeof(PointInCluster));
+      (PointInCluster*)calloc(tmp_kmeans->points_cnt, sizeof(PointInCluster));
   tmp_kmeans->clusters =
       (Point*)malloc(tmp_kmeans->clusters_cnt * sizeof(Point));
-  for (size_t i = 0; i < 4; i++) {
-    tmp_kmeans->points[i].point.x = rand() % 50;
-    tmp_kmeans->points[i].point.y = rand() % 50;
-    tmp_kmeans->points[i].point.z = rand() % 50;
-    tmp_kmeans->points[i].in_cluster = 0;
-
-    tmp_kmeans->points[i + 4].point.x = 100 + rand() % 50;
-    tmp_kmeans->points[i + 4].point.y = 100 + rand() % 50;
-    tmp_kmeans->points[i + 4].point.z = 100 + rand() % 50;
-    tmp_kmeans->points[i + 4].in_cluster = 0;
-
-    tmp_kmeans->points[i + 8].point.x = 1000 + rand() % 50;
-    tmp_kmeans->points[i + 8].point.y = 1000 + rand() % 50;
-    tmp_kmeans->points[i + 8].point.z = 1000 + rand() % 50;
-    tmp_kmeans->points[i + 8].in_cluster = 0;
+  for (size_t i = 0; i < tmp_kmeans->points_cnt; ++i) {
+    fscanf(file, "%d %d %d", &tmp_kmeans->points[i].point.x,
+           &tmp_kmeans->points[i].point.y, &tmp_kmeans->points[i].point.z);
   }
 
   *kmeans = tmp_kmeans;
+  fclose(file);
   return SUCCESS;
 }
 

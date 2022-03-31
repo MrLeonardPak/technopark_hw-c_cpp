@@ -69,3 +69,19 @@ TEST(KMEANS_TESTS, ClusterSort_TEST) {
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, kmeans->points_cnt + 1, &changed));
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 1, 0, &changed));
 }
+
+TEST(KMEANS_TESTS, MAIN_TEST) {
+  KMeans* kmeans = NULL;
+  EXPECT_EQ(SUCCESS, CreatPoints(&kmeans));
+  if (StartAlgorithm(kmeans)) {
+    printf("Bad 2");
+  }
+
+  if (PrintClusters(kmeans)) {
+    printf("Bad 3");
+  }
+
+  if (DeletePoints(&kmeans)) {
+    printf("Bad 4");
+  }
+}
