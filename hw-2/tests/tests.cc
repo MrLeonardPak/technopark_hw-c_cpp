@@ -79,10 +79,10 @@ TEST(KMEANS_TESTS, MAIN_TEST) {
   // Проверка на передачу NULL
   EXPECT_EQ(FAILURE, CreatPoints(NULL));
   EXPECT_EQ(FAILURE, StartAlgorithm(NULL));
-  EXPECT_EQ(SUCCESS, PrintClusters(NULL));
-  EXPECT_EQ(SUCCESS, DeletePoints(NULL));
+  EXPECT_EQ(FAILURE, PrintClusters(NULL));
+  EXPECT_EQ(FAILURE, DeletePoints(NULL));
 
-  EXPECT_EQ(SUCCESS, CreatPoints(&kmeans));
+  ASSERT_EQ(SUCCESS, CreatPoints(&kmeans));
   EXPECT_EQ(SUCCESS, StartAlgorithm(kmeans));
   EXPECT_EQ(SUCCESS, PrintClusters(kmeans));
   EXPECT_EQ(SUCCESS, DeletePoints(&kmeans));
