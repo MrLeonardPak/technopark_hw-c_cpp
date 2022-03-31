@@ -76,6 +76,12 @@ TEST(KMEANS_TESTS, ClusterSort_TEST) {
 
 TEST(KMEANS_TESTS, MAIN_TEST) {
   KMeans* kmeans = NULL;
+  // Проверка на передачу NULL
+  EXPECT_EQ(FAILURE, CreatPoints(NULL));
+  EXPECT_EQ(FAILURE, StartAlgorithm(NULL));
+  EXPECT_EQ(SUCCESS, PrintClusters(NULL));
+  EXPECT_EQ(SUCCESS, DeletePoints(NULL));
+
   EXPECT_EQ(SUCCESS, CreatPoints(&kmeans));
   EXPECT_EQ(SUCCESS, StartAlgorithm(kmeans));
   EXPECT_EQ(SUCCESS, PrintClusters(kmeans));

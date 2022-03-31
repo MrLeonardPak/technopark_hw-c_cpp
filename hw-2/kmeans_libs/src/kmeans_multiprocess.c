@@ -55,7 +55,7 @@ static void Handler(int sig_num) {
  * @return int
  */
 int CreatPoints(KMeans** kmeans) {
-  if (*kmeans != NULL) {
+  if ((kmeans == NULL) || (*kmeans != NULL)) {
     return FAILURE;
   }
   // TODO: Переписать под прием из файла
@@ -214,6 +214,9 @@ void StartChildWork(int msgid, KMeans* kmeans) {
  * @return int
  */
 int StartAlgorithm(KMeans* kmeans) {
+  if (kmeans == NULL) {
+    return FAILURE;
+  }
   // За первые центры кластеров берутся первые точки из данных
   for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
     kmeans->clusters[i] = kmeans->points[i].point;
