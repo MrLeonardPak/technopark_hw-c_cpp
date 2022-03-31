@@ -39,14 +39,17 @@ int CreatPoints(KMeans** kmeans) {
   for (size_t i = 0; i < 4; i++) {
     tmp_kmeans->points[i].point.x = rand() % 50;
     tmp_kmeans->points[i].point.y = rand() % 50;
+    tmp_kmeans->points[i].point.z = rand() % 50;
     tmp_kmeans->points[i].in_cluster = 0;
 
     tmp_kmeans->points[i + 4].point.x = 100 + rand() % 50;
     tmp_kmeans->points[i + 4].point.y = 100 + rand() % 50;
+    tmp_kmeans->points[i + 4].point.z = 100 + rand() % 50;
     tmp_kmeans->points[i + 4].in_cluster = 0;
 
     tmp_kmeans->points[i + 8].point.x = 1000 + rand() % 50;
     tmp_kmeans->points[i + 8].point.y = 1000 + rand() % 50;
+    tmp_kmeans->points[i + 8].point.z = 1000 + rand() % 50;
     tmp_kmeans->points[i + 8].in_cluster = 0;
   }
 
