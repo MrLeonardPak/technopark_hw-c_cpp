@@ -22,6 +22,21 @@
 #include <unistd.h>
 
 const float threshold = 0;
+static int phase_num = 0;
+
+static void Handler(int sig_num) {
+  switch (sig_num) {
+    case SIGUSR1:
+      phase_num = 1;
+      break;
+    case SIGUSR2:
+      phase_num = 2;
+      break;
+    default:
+      signal(sig_num, SIG_DFL);
+      break;
+  }
+}
 
 /**
  * @brief Создает специальную структуру из TODO:
@@ -128,22 +143,12 @@ void ReadMessage(int qid, char* text, long type) {
   strcpy(text, q_buf.mtext);
 }
 
-static int phase_num = 0;
-
-static void Handler(int sig_num) {
-  switch (sig_num) {
-    case SIGUSR1:
-      phase_num = 1;
-      break;
-    case SIGUSR2:
-      phase_num = 2;
-      break;
-    default:
-      signal(sig_num, SIG_DFL);
-      break;
-  }
-}
-
+/**
+ * @brief Запуск работы дочерних процессов
+ * Работает в режиме конечного автомата
+ * @param msgid
+ * @param kmeans
+ */
 void StartChildWork(int msgid, KMeans* kmeans) {
   char send_tmp[MAX_SEND_SIZE] = {0};
   char recv_tmp[MAX_SEND_SIZE] = {0};
