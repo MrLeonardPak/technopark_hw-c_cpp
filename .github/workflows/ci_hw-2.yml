@@ -62,7 +62,7 @@ jobs:
           lcov -t "tests/test_kmeans" -o coverage.info -c -d kmeans_libs/
           
       - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@1.1.3
+        uses: coverallsapp/github-action@master
         with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
