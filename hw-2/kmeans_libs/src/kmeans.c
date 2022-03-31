@@ -18,7 +18,7 @@
  *
  */
 
-#include "../inc/kmeans.h"
+#include "kmeans.h"
 
 /**
  * @brief Квадрат евклидового растояния

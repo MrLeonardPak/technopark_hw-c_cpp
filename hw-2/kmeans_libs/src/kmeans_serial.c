@@ -9,7 +9,7 @@
  *
  */
 
-#include "../inc/kmeans.h"
+#include "kmeans.h"
 
 const float threshold = 0.01;
 
