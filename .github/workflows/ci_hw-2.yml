@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12
+          sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12 lcov
       - name: CMake with option for tests
         run: |
           cd hw-2
@@ -56,6 +56,16 @@ jobs:
         run: |
           cd hw-2/build 
           ./tests/test_kmeans
+      - name: Generate coverage reports
+        run: |
+          cd hw-2/build 
+          lcov -t "tests/test_kmeans" -o coverage.info -c -d kmeans_libs/
+          
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@1.1.3
+        with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
   # Сборка многопроцессоной реализации
   multiprocess-build:
     runs-on: ubuntu-latest
