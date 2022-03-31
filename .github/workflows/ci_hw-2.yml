@@ -1,5 +1,4 @@
 name: CI HW-2
-
 on:
   # Triggers the workflow on push for hw-2 branch or pull request for main branch events 
   push:
@@ -8,40 +7,31 @@ on:
     branches: [ main ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-
-      - name: Run a one-line script
-        run: echo Start CI!
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake build-essential clang-tidy-12 clang-format-12
-
       - name: CMake with option for tests
         run: |
           cd hw-2
           mkdir build
           cd build
           cmake -DBUILD_TESTS=ON ..
-
-      - name: Check code style
+      - name: Code Style
         run: |
           cd hw-2/build 
           make clangformat/fast
-
       - name: Make
         run: |
           cd hw-2/build 
           make
-
-      - name: Start test
+      - name: TESTS
         run: |
           cd hw-2/build 
           ./tests/test_kmeans
