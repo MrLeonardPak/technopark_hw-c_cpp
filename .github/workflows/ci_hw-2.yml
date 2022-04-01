@@ -65,7 +65,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: hw-2/build/coverage.info
-          flag-name: serial
+          git-branch: ${{ secrets.GITHUB_REF }}_serial
 
   # Сборка многопроцессоной реализации
   multiprocess-build:
@@ -124,4 +124,4 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: hw-2/build/coverage.info
-          flag-name: multiprocess     
+          git-branch: ${{ secrets.GITHUB_REF }}_multiprocess     
