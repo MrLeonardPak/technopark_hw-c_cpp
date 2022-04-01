@@ -55,7 +55,7 @@ jobs:
       - name: TESTS
         run: |
           cd hw-2/build 
-          ./tests/test_kmeans
+          make tests_with_valgrind
       - name: Generate coverage reports
         run: |
           cd hw-2/build 
