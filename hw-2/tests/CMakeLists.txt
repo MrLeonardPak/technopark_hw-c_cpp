@@ -4,7 +4,12 @@ project(test_kmeans)
 set(TESTS_KMEANS_EXECUTABLE)
 set(TESTS_KMEANS_INCLUDE_DIRS)
 
-file(GLOB SOURCES *.cc)
+if(MULTIPROCESS)
+  file(GLOB SOURCES kmeans_tests.cc multiprocess_tests.cc)
+else()
+  file(GLOB SOURCES kmeans_tests.cc serial_tests.cc)
+endif()
+
 file(GLOB INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 option(BUILD_GMOCK "Do you want to build gmonk?" OFF)

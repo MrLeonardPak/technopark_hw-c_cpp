@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(kmeans_lib)
 
-option(MULTIPROCESS "Do you want to run multiprocessing?" OFF)
-
 set(KMEANS_LIB_LIBRARIES)
 set(KMEANS_LIB_INCLUDE_DIRS)
 set(KMEANS_LIB_SOURCES)

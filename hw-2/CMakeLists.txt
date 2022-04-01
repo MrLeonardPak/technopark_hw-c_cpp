@@ -3,6 +3,7 @@ project(hw-2)
 
 option(TESTS "Do you want to build test?" OFF)
 option(WITH_STATIC_CHECKS "Do you want to use static checks?" OFF)
+option(MULTIPROCESS "Do you want to run multiprocessing?" OFF)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
