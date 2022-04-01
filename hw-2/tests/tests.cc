@@ -76,6 +76,9 @@ TEST(KMEANS_TESTS, ClusterSort_TEST) {
 
 TEST(KMEANS_TESTS, MAIN_TEST) {
   KMeans* kmeans = NULL;
+  int status = system("data/data 1");
+  ASSERT_EQ(status, 0);
+
   // Проверка на передачу NULL
   EXPECT_EQ(FAILURE, CreatPoints(NULL));
   EXPECT_EQ(FAILURE, StartAlgorithm(NULL));

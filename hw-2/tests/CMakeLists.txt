@@ -34,3 +34,5 @@ add_custom_target(
         --error-exitcode=1
         ${CMAKE_BINARY_DIR}/tests/${PROJECT_NAME}
 )
+
+add_subdirectory(data)
