@@ -1,5 +1,16 @@
+/**
+ * @file kmeans.h
+ * @author Leonard Pak (leopak2000@gmail.com)
+ * @brief Общий header файл для однопроцессорной и многопроцессорной реализации
+ * @version 0.1
+ * @date 2022-04-01
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef HW2_KMEANS_H
 #define HW2_KMEANS_H
+
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -25,7 +36,7 @@ typedef struct KMeans {
   Point* clusters;
   size_t clusters_cnt;
 } KMeans;
-
+// Общая реализация
 int SquareEuclideanDistance(Point const* point_a,
                             Point const* point_b,
                             int* out);
@@ -35,9 +46,8 @@ int ClusterSort(KMeans* kmeans,
                 size_t* changed_test);
 int FindClusterCenter(KMeans const* kmeans, size_t cluster_num);
 int DeletePoints(KMeans** kmeans);
-
+// Разные реализации
 int CreatPoints(KMeans** kmeans, char const* file_name);
 int StartAlgorithm(KMeans* kmeans);
 int PrintClusters(KMeans const* kmeans);
-
 #endif  // HW2_KMEANS_H

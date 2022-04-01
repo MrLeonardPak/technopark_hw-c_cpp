@@ -1,7 +1,9 @@
 /**
  * @file kmeans.c
- * @author your name (you@domain.com)
- * @brief Алгоритм кластеризации k-средних
+ * @author Leonard Pak (leopak2000@gmail.com)
+ * @brief Определение функций с одинаковой реализаций для однопроцессорного и
+ * многопроцессорного варианта.
+ * Алгоритм кластеризации k-средних:
  * 1. Получить массив точек arr и число кластеров k
  * 2. Взять k первых точек - центры кластеров
  * 3. Для каждой оставшейся точки:
@@ -25,7 +27,7 @@
  *
  * @param point_a
  * @param point_b
- * @param out - результат
+ * @param out
  * @return int
  */
 int SquareEuclideanDistance(Point const* point_a,
@@ -42,13 +44,14 @@ int SquareEuclideanDistance(Point const* point_a,
 }
 
 /**
- * @brief Сортировка по кластерам
+ * @brief Сортировка по кластерам.
  * Считает расстояние для каждой точки до каждого центра кластера.
  * По наименьшему значению привязывает точку к кластеру.
  * Также считает количество точек, изменивших свой кластер.
  * @param kmeans
  * @param batch_start
  * @param batch_end
+ * @param changed
  * @return int
  */
 int ClusterSort(KMeans* kmeans,
@@ -65,8 +68,7 @@ int ClusterSort(KMeans* kmeans,
     int dist_min = 0;
     size_t near_cluster = 0;
     int tmp = 0;
-    // Поиск ближайшего кластера.
-    // Инициализация поиска минимума
+    // Поиск ближайшего кластера. Инициализация поиска минимума
     if (SquareEuclideanDistance(&kmeans->points[i].point, &kmeans->clusters[0],
                                 &tmp)) {
       return FAILURE;
@@ -95,11 +97,11 @@ int ClusterSort(KMeans* kmeans,
 }
 
 /**
- * @brief Поиск центра кластера
- * Считает центр тяжести  кластера  cluster_num по среднему значению всех точек.
- * Результат заносится в kmeans->clusters[cluster_num]
+ * @brief Поиск центра кластера.
+ * Считает центр тяжести кластера cluster_num по среднему значению координат
+ * всех точек. Результат заносится в kmeans->clusters[cluster_num]
  * @param kmeans
- * @param cluster_num - не больше, чем kmeans->clusters_cnt
+ * @param cluster_num
  * @return int
  */
 int FindClusterCenter(KMeans const* kmeans, size_t cluster_num) {

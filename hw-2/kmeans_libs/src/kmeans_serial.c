@@ -1,7 +1,7 @@
 /**
  * @file kmeans_serial.c
- * @author your name (you@domain.com)
- * @brief Запуск алгоритма k-средних в последовательном режиме
+ * @author Leonard Pak (leopak2000@gmail.com)
+ * @brief Запуск алгоритма k-средних в последовательном режиме.
  * @version 0.1
  * @date 2022-03-28
  *
@@ -14,25 +14,26 @@
 const float threshold = 0.01;
 
 /**
- * @brief Создает специальную структуру из TODO:
+ * @brief Создает специальную структуру из бинарного файла
  *
- * @param kmeans - должен быть пустым и NULL
+ * @param kmeans
+ * @param file_name
  * @return int
  */
 int CreatPoints(KMeans** kmeans, char const* file_name) {
   if ((kmeans == NULL) || (*kmeans != NULL) || (file_name == NULL)) {
     return FAILURE;
   }
-  // TODO: Переписать под прием из файла
+
   FILE* fptr = NULL;
   fptr = fopen(file_name, "rb");
   if (fptr == NULL) {
     return FAILURE;
   }
   KMeans* tmp_kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
+  // В начале файла расположены количество точек и необходимое число кластеров
   fread(&tmp_kmeans->points_cnt, sizeof(size_t), 1, fptr);
   fread(&tmp_kmeans->clusters_cnt, sizeof(size_t), 1, fptr);
-
   // Кластеров не должно быть больше, чем самих точек
   if (tmp_kmeans->clusters_cnt > tmp_kmeans->points_cnt) {
     free(tmp_kmeans);
@@ -40,11 +41,13 @@ int CreatPoints(KMeans** kmeans, char const* file_name) {
     return FAILURE;
   }
   tmp_kmeans->points =
-      (PointInCluster*)calloc(tmp_kmeans->points_cnt, sizeof(PointInCluster));
+      (PointInCluster*)malloc(tmp_kmeans->points_cnt * sizeof(PointInCluster));
   tmp_kmeans->clusters =
       (Point*)malloc(tmp_kmeans->clusters_cnt * sizeof(Point));
+  // Далее расположены сами точки
   for (size_t i = 0; i < tmp_kmeans->points_cnt; ++i) {
     fread(&tmp_kmeans->points[i].point, sizeof(Point), 1, fptr);
+    tmp_kmeans->points[i].in_cluster = 0;
   }
 
   *kmeans = tmp_kmeans;
@@ -55,19 +58,18 @@ int CreatPoints(KMeans** kmeans, char const* file_name) {
 /**
  * @brief Запуск алгоритма
  *
- * @param kmeans -необходимо заранее создать через вызов CreatPoints()
+ * @param kmeans
  * @return int
  */
 int StartAlgorithm(KMeans* kmeans) {
   if (kmeans == NULL) {
     return FAILURE;
   }
-
   // За первые центры кластеров берутся первые точки из данных
   for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
     kmeans->clusters[i] = kmeans->points[i].point;
   }
-
+  // Условие выхода из цикла - алгоритм сошелся в какой-то диапазон
   size_t changed = 0;
   do {
     if (ClusterSort(kmeans, 0, kmeans->points_cnt, &changed)) {

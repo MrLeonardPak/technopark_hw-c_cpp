@@ -1,8 +1,8 @@
 /**
- * @file kmeans_multiplex.c
- * @author your name (you@domain.com)
- * @brief Запуск алгоритма k-средних в паралельном режиме
- * Паралелтзация через процессы
+ * @file kmeans_multiprocess.c
+ * @author Leonard Pak (leopak2000@gmail.com)
+ * @brief Запуск алгоритма k-средних в паралельном режиме (процессы)
+ *
  * @version 0.1
  * @date 2022-03-28
  *
@@ -31,7 +31,7 @@ typedef struct MsgBuf {
   char mtext[MAX_SEND_SIZE];
 } MsgBuf;
 
-const float threshold = 0;
+const float threshold = 0.1;
 static int phase_num = 0;
 
 static void Handler(int sig_num) {
@@ -52,16 +52,17 @@ static void Handler(int sig_num) {
 }
 
 /**
- * @brief Создает специальную структуру из TODO:
+ * @brief Создает специальную структуру из бинарного файла
  *
- * @param kmeans - должен быть пустым и NULL
+ * @param kmeans
+ * @param file_name
  * @return int
  */
 int CreatPoints(KMeans** kmeans, char const* file_name) {
   if ((kmeans == NULL) || (*kmeans != NULL) || (file_name == NULL)) {
     return FAILURE;
   }
-  // TODO: Переписать под прием из файла
+
   FILE* fptr = NULL;
   fptr = fopen(file_name, "rb");
   if (fptr == NULL) {
@@ -71,6 +72,7 @@ int CreatPoints(KMeans** kmeans, char const* file_name) {
   KMeans* tmp_kmeans =
       (KMeans*)mmap(NULL, sizeof(KMeans), PROT_READ | PROT_WRITE,
                     MAP_SHARED | MAP_ANON, -1, 0);
+  // В начале файла расположены количество точек и необходимое число кластеров
   fread(&tmp_kmeans->points_cnt, sizeof(size_t), 1, fptr);
   fread(&tmp_kmeans->clusters_cnt, sizeof(size_t), 1, fptr);
   // Кластеров не должно быть больше, чем самих точек
@@ -85,39 +87,13 @@ int CreatPoints(KMeans** kmeans, char const* file_name) {
   tmp_kmeans->clusters =
       (Point*)mmap(NULL, tmp_kmeans->clusters_cnt * sizeof(Point),
                    PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+  // Далее расположены сами точки
   for (size_t i = 0; i < tmp_kmeans->points_cnt; ++i) {
     fread(&tmp_kmeans->points[i].point, sizeof(Point), 1, fptr);
   }
 
   *kmeans = tmp_kmeans;
   fclose(fptr);
-  return SUCCESS;
-}
-
-/**
- * @brief Аккуратное удаление выделенной памяти
- *
- * @param kmeans
- * @return int
- */
-int DeletePoints(KMeans** kmeans) {
-  if ((kmeans == NULL) || (*kmeans == NULL)) {
-    return FAILURE;
-  }
-  // HACK: Стоит проверять munmap на ошибку
-  KMeans* tmp_kmeans = *kmeans;
-  if (tmp_kmeans->points != NULL) {
-    munmap(tmp_kmeans->points, tmp_kmeans->points_cnt * sizeof(PointInCluster));
-    tmp_kmeans->points = NULL;
-  }
-  if (tmp_kmeans->clusters != NULL) {
-    munmap(tmp_kmeans->clusters, tmp_kmeans->clusters_cnt * sizeof(Point));
-    tmp_kmeans->clusters = NULL;
-  }
-  munmap(tmp_kmeans, sizeof(KMeans));
-  tmp_kmeans = NULL;
-
-  *kmeans = tmp_kmeans;
   return SUCCESS;
 }
 
@@ -211,7 +187,7 @@ void StartChildWork(int msgid, KMeans* kmeans) {
 /**
  * @brief Запуск алгоритма
  *
- * @param kmeans -необходимо заранее создать через вызов CreatPoints()
+ * @param kmeans
  * @return int
  */
 int StartAlgorithm(KMeans* kmeans) {
@@ -303,5 +279,32 @@ int StartAlgorithm(KMeans* kmeans) {
   }
   // HACK: Стоит проверить на возврат с ошибкой
   msgctl(msgid, IPC_RMID, NULL);
+  return SUCCESS;
+}
+
+/**
+ * @brief Аккуратное удаление выделенной памяти
+ *
+ * @param kmeans
+ * @return int
+ */
+int DeletePoints(KMeans** kmeans) {
+  if ((kmeans == NULL) || (*kmeans == NULL)) {
+    return FAILURE;
+  }
+  // HACK: Стоит проверять munmap на ошибку
+  KMeans* tmp_kmeans = *kmeans;
+  if (tmp_kmeans->points != NULL) {
+    munmap(tmp_kmeans->points, tmp_kmeans->points_cnt * sizeof(PointInCluster));
+    tmp_kmeans->points = NULL;
+  }
+  if (tmp_kmeans->clusters != NULL) {
+    munmap(tmp_kmeans->clusters, tmp_kmeans->clusters_cnt * sizeof(Point));
+    tmp_kmeans->clusters = NULL;
+  }
+  munmap(tmp_kmeans, sizeof(KMeans));
+  tmp_kmeans = NULL;
+
+  *kmeans = tmp_kmeans;
   return SUCCESS;
 }
