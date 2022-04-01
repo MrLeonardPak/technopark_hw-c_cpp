@@ -30,7 +30,8 @@ add_custom_target(
         tests_with_valgrind
         COMMAND valgrind
         --tool=memcheck
-        --leak-check=yes
+        --leak-check=full
+        --show-leak-kinds=all
         --error-exitcode=1
         ${CMAKE_BINARY_DIR}/tests/${PROJECT_NAME}
 )
