@@ -23,21 +23,24 @@ typedef struct Point {
   int z;
 } Point;
 
-static int CreatData(size_t points_cnt, size_t clusters_cnt);
+static int CreatData(char const* file_name,
+                     size_t points_cnt,
+                     size_t clusters_cnt);
 static int WritePoint(FILE* fptr, int lower_limit, int upper_limit);
 
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
+  if (argc != 3) {
+    printf("Invalid input arguments!\n");
     return FAILURE;
   }
   int type = atoi(argv[1]);
   int rtn = 0;
   switch (type) {
     case 0:
-      rtn = CreatData(33000000, 5);
+      rtn = CreatData(argv[2], 33000000, 5);
       break;
     case 1:
-      rtn = CreatData(12, 3);
+      rtn = CreatData(argv[2], 12, 3);
       break;
     default:
       rtn = FAILURE;
@@ -46,17 +49,21 @@ int main(int argc, char* argv[]) {
   return rtn;
 }
 
-static int CreatData(size_t points_cnt, size_t clusters_cnt) {
+static int CreatData(char const* file_name,
+                     size_t points_cnt,
+                     size_t clusters_cnt) {
   FILE* fptr;
-  fptr = fopen("/tmp/data.bin", "wb");
+  fptr = fopen(file_name, "wb");
   if (fptr == NULL) {
     return FAILURE;
   }
 
   if (fwrite(&points_cnt, sizeof(size_t), 1, fptr) != 1) {
+    fclose(fptr);
     return FAILURE;
   }
   if (fwrite(&clusters_cnt, sizeof(size_t), 1, fptr) != 1) {
+    fclose(fptr);
     return FAILURE;
   }
 

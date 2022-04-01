@@ -16,7 +16,8 @@
 
 int main() {
   KMeans* kmeans = NULL;
-  if (CreatPoints(&kmeans)) {
+  char const* file_name = "/tmp/data.bin";
+  if (CreatPoints(&kmeans, file_name)) {
     printf("Bad 1");
   }
   if (StartAlgorithm(kmeans)) {

@@ -19,15 +19,14 @@ const float threshold = 0.01;
  * @param kmeans - должен быть пустым и NULL
  * @return int
  */
-int CreatPoints(KMeans** kmeans) {
-  if ((kmeans == NULL) || (*kmeans != NULL)) {
+int CreatPoints(KMeans** kmeans, char const* file_name) {
+  if ((kmeans == NULL) || (*kmeans != NULL) || (file_name == NULL)) {
     return FAILURE;
   }
   // TODO: Переписать под прием из файла
   FILE* fptr = NULL;
-  fptr = fopen("/tmp/data.bin", "rb");
+  fptr = fopen(file_name, "rb");
   if (fptr == NULL) {
-    puts("No file");
     return FAILURE;
   }
   KMeans* tmp_kmeans = (KMeans*)malloc(1 * sizeof(KMeans));

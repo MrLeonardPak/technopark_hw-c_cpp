@@ -36,7 +36,7 @@ int ClusterSort(KMeans* kmeans,
 int FindClusterCenter(KMeans const* kmeans, size_t cluster_num);
 int DeletePoints(KMeans** kmeans);
 
-int CreatPoints(KMeans** kmeans);
+int CreatPoints(KMeans** kmeans, char const* file_name);
 int StartAlgorithm(KMeans* kmeans);
 int PrintClusters(KMeans const* kmeans);
 

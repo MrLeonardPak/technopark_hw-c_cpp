@@ -76,16 +76,17 @@ TEST(KMEANS_TESTS, ClusterSort_TEST) {
 
 TEST(KMEANS_TESTS, MAIN_TEST) {
   KMeans* kmeans = NULL;
-  int status = system("data/data 1");
+  int status = system("data/data 1 /tmp/data.bin");
   ASSERT_EQ(status, 0);
 
   // Проверка на передачу NULL
-  EXPECT_EQ(FAILURE, CreatPoints(NULL));
+  EXPECT_EQ(FAILURE, CreatPoints(NULL, "/tmp/data.bin"));
+  EXPECT_EQ(FAILURE, CreatPoints(&kmeans, NULL));
   EXPECT_EQ(FAILURE, StartAlgorithm(NULL));
   EXPECT_EQ(FAILURE, PrintClusters(NULL));
   EXPECT_EQ(FAILURE, DeletePoints(NULL));
 
-  ASSERT_EQ(SUCCESS, CreatPoints(&kmeans));
+  ASSERT_EQ(SUCCESS, CreatPoints(&kmeans, "/tmp/data.bin"));
   EXPECT_EQ(SUCCESS, StartAlgorithm(kmeans));
   EXPECT_EQ(SUCCESS, PrintClusters(kmeans));
   EXPECT_EQ(SUCCESS, DeletePoints(&kmeans));
