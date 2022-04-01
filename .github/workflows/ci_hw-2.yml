@@ -59,8 +59,7 @@ jobs:
       - name: Generate coverage reports
         run: |
           cd hw-2/build 
-          lcov -t "tests/test_kmeans" -o coverage.info -c -d kmeans_libs/
-          
+          lcov -t "tests/test_kmeans" -o coverage.info -c -d kmeans_libs/        
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@master
         with:
@@ -116,3 +115,13 @@ jobs:
         run: |
           cd hw-2/build 
           make tests_with_valgrind
+      - name: Generate coverage reports
+        run: |
+          cd hw-2/build 
+          lcov -t "tests/test_kmeans" -o coverage.info -c -d kmeans_libs/
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: hw-2/build/coverage.info
+          flag-name: multiprocess     
