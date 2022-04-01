@@ -32,13 +32,18 @@
  */
 int SquareEuclideanDistance(Point const* point_a,
                             Point const* point_b,
-                            int* out) {
+                            unsigned long* out) {
   if ((out == NULL) || (point_a == NULL) || (point_b == NULL)) {
     return FAILURE;
   }
-
-  *out = pow((point_a->x - point_b->x), 2) + pow((point_a->y - point_b->y), 2) +
-         pow((point_a->z - point_b->z), 2);
+  // Координаты точек - это int. В худшем случае имеем delta от -INT_MAX ДО
+  // INT_MAX, которое затем надо возвести во 2 степень. Тогда надо иметь
+  // небольшой запас по значениям + ответ всё равно положительный
+  // Возможно, лучше использовать расстояние Чебышева
+  unsigned long delta_x = (unsigned long)abs(point_a->x - point_b->x);
+  unsigned long delta_y = (unsigned long)abs(point_a->y - point_b->y);
+  unsigned long delta_z = (unsigned long)abs(point_a->z - point_b->z);
+  *out = delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
 
   return SUCCESS;
 }
@@ -65,17 +70,11 @@ int ClusterSort(KMeans* kmeans,
 
   *changed = 0;
   for (size_t i = batch_start; i < batch_end; ++i) {
-    int dist_min = 0;
+    unsigned long dist_min = ULONG_MAX;
     size_t near_cluster = 0;
-    int tmp = 0;
-    // Поиск ближайшего кластера. Инициализация поиска минимума
-    if (SquareEuclideanDistance(&kmeans->points[i].point, &kmeans->clusters[0],
-                                &tmp)) {
-      return FAILURE;
-    }
-    dist_min = tmp;
-    // Пробегаемся по расстоянию до каждого кластера
-    for (size_t j = 1; j < kmeans->clusters_cnt; ++j) {
+    unsigned long tmp = 0;
+    // Поиск ближайшего кластера. По аналогии обычного поиска минимума
+    for (size_t j = 0; j < kmeans->clusters_cnt; ++j) {
       if (SquareEuclideanDistance(&kmeans->points[i].point,
                                   &kmeans->clusters[j], &tmp)) {
         return FAILURE;

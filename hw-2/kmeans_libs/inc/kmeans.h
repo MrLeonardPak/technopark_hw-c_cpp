@@ -11,6 +11,7 @@
 #ifndef HW2_KMEANS_H
 #define HW2_KMEANS_H
 
+#include <limits.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -39,7 +40,7 @@ typedef struct KMeans {
 // Общая реализация
 int SquareEuclideanDistance(Point const* point_a,
                             Point const* point_b,
-                            int* out);
+                            unsigned long* out);
 int ClusterSort(KMeans* kmeans,
                 size_t batch_start,
                 size_t batch_end,

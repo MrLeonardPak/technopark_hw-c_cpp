@@ -21,8 +21,8 @@ TEST(KMEANS_TESTS, SquareEuclideanDistance_TEST) {
   size_t const ans_cnt = 3;
   Point const points_a[ans_cnt] = {{0, 0, 0}, {1, 2, 3}, {2, 2, 2}};
   Point const points_b[ans_cnt] = {{0, 0, 0}, {3, 2, 1}, {-2, -2, -2}};
-  int const right_answers[ans_cnt] = {0, 8, 48};
-  int answer = 0;
+  unsigned long const right_answers[ans_cnt] = {0, 8, 48};
+  unsigned long answer = 0;
   // Проверка на передачу NULL
   EXPECT_EQ(FAILURE, SquareEuclideanDistance(NULL, &points_b[0], &answer));
   EXPECT_EQ(FAILURE, SquareEuclideanDistance(&points_a[0], NULL, &answer));
