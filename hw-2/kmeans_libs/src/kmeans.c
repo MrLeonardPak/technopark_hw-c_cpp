@@ -64,7 +64,8 @@ int ClusterSort(KMeans* kmeans,
                 size_t batch_end,
                 size_t* changed) {
   if ((kmeans == NULL) || (batch_end > kmeans->points_cnt) ||
-      (batch_start > batch_end) || (changed == NULL)) {
+      (batch_start > batch_end) || (changed == NULL) ||
+      (kmeans->points == NULL) || (kmeans->clusters == NULL)) {
     return FAILURE;
   }
 
@@ -75,10 +76,9 @@ int ClusterSort(KMeans* kmeans,
     unsigned long tmp = 0;
     // Поиск ближайшего кластера. По аналогии обычного поиска минимума
     for (size_t j = 0; j < kmeans->clusters_cnt; ++j) {
-      if (SquareEuclideanDistance(&kmeans->points[i].point,
-                                  &kmeans->clusters[j], &tmp)) {
-        return FAILURE;
-      }
+      // Тут проверка возврата лишнее, тк всё необходимое же проверено
+      SquareEuclideanDistance(&kmeans->points[i].point, &kmeans->clusters[j],
+                              &tmp);
       // И сохраняем наименьший
       if (tmp < dist_min) {
         dist_min = tmp;

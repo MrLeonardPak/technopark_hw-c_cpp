@@ -55,22 +55,33 @@ TEST(KMEANS_TESTS, FindClusterCentere_TEST) {
   EXPECT_EQ(right_answers.x, kmeans->clusters[0].x);
   EXPECT_EQ(right_answers.y, kmeans->clusters[0].y);
   EXPECT_EQ(right_answers.z, kmeans->clusters[0].z);
-
+  // Освобождение памяти
   free(kmeans->clusters);
   free(kmeans->points);
   free(kmeans);
 }
 
 TEST(KMEANS_TESTS, ClusterSort_TEST) {
-  KMeans* kmeans = (KMeans*)calloc(1, sizeof(KMeans));
+  KMeans* kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
+  kmeans->clusters = (Point*)malloc(1 * sizeof(Point));
+  kmeans->points = (PointInCluster*)malloc(1 * sizeof(PointInCluster));
   kmeans->points_cnt = 3;
+  kmeans->clusters_cnt = 2;
   size_t changed = 0;
   // Проверка на передачу NULL
   EXPECT_EQ(FAILURE, ClusterSort(NULL, 0, 1, &changed));
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, 1, NULL));
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, kmeans->points_cnt + 1, &changed));
   EXPECT_EQ(FAILURE, ClusterSort(kmeans, 1, 0, &changed));
-
+  free(kmeans->points);
+  kmeans->points = NULL;
+  EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, 1, &changed));
+  free(kmeans->clusters);
+  kmeans->clusters = NULL;
+  kmeans->points = (PointInCluster*)malloc(1 * sizeof(PointInCluster));
+  EXPECT_EQ(FAILURE, ClusterSort(kmeans, 0, 1, &changed));
+  // Освобождение памяти
+  free(kmeans->points);
   free(kmeans);
 }
 
@@ -78,14 +89,13 @@ TEST(KMEANS_TESTS, MAIN_TEST) {
   KMeans* kmeans = NULL;
   int status = system("data/data 1 /tmp/data.bin");
   ASSERT_EQ(status, 0);
-
   // Проверка на передачу NULL
   EXPECT_EQ(FAILURE, CreatPoints(NULL, "/tmp/data.bin"));
   EXPECT_EQ(FAILURE, CreatPoints(&kmeans, NULL));
   EXPECT_EQ(FAILURE, StartAlgorithm(NULL));
   EXPECT_EQ(FAILURE, PrintClusters(NULL));
   EXPECT_EQ(FAILURE, DeletePoints(NULL));
-
+  // Проверка на полную работу
   ASSERT_EQ(SUCCESS, CreatPoints(&kmeans, "/tmp/data.bin"));
   EXPECT_EQ(SUCCESS, StartAlgorithm(kmeans));
   EXPECT_EQ(SUCCESS, PrintClusters(kmeans));
