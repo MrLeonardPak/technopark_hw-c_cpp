@@ -42,6 +42,9 @@ static void Handler(int sig_num) {
     case SIGUSR2:
       phase_num = 2;
       break;
+    case SIGTERM:
+      exit(0);
+      break;
     default:
       signal(sig_num, SIG_DFL);
       break;
@@ -163,6 +166,7 @@ void StartChildWork(int msgid, KMeans* kmeans) {
   // Для синхронизации с родителем
   signal(SIGUSR1, Handler);
   signal(SIGUSR2, Handler);
+  signal(SIGTERM, Handler);
   raise(SIGSTOP);
   // Дочерние процессы работают как конечный автомат
   while (1) {
@@ -294,7 +298,7 @@ int StartAlgorithm(KMeans* kmeans) {
 
   for (size_t i = 0; i < process_cnt; ++i) {
     // HACK: Стоит проверить на возврат с ошибкой
-    kill(pids[i], SIGKILL);
+    kill(pids[i], SIGTERM);
     printf("Killed %d\n", pids[i]);
   }
   // HACK: Стоит проверить на возврат с ошибкой
