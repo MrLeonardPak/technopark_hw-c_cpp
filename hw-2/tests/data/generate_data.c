@@ -12,6 +12,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #define FAILURE -1
@@ -27,6 +28,7 @@ static int CreatData(char const* file_name,
                      size_t points_cnt,
                      size_t clusters_cnt);
 static int WritePoint(FILE* fptr, int lower_limit, int upper_limit);
+static int CreatFasleData(char const* file_name, int error_type);
 
 int main(int argc, char* argv[]) {
   if (argc != 3) {
@@ -41,6 +43,9 @@ int main(int argc, char* argv[]) {
       break;
     case 1:
       rtn = CreatData(argv[2], 12, 3);
+      break;
+    case 2:
+      rtn = CreatFasleData(argv[2], type);
       break;
     default:
       rtn = FAILURE;
@@ -111,4 +116,32 @@ static int WritePoint(FILE* fptr, int lower_limit, int dispersion) {
     return FAILURE;
   }
   return SUCCESS;
+}
+
+static int CreatFasleData(char const* file_name, int error_type) {
+  FILE* fptr;
+  switch (error_type) {
+    case 2:
+      // Количество кластеров больше, чем количество точек
+      fptr = fopen(file_name, "wb");
+      if (fptr == NULL) {
+        return FAILURE;
+      }
+      size_t points_cnt = 5;
+      size_t clusters_cnt = 10;
+      if (fwrite(&points_cnt, sizeof(size_t), 1, fptr) != 1) {
+        fclose(fptr);
+        return FAILURE;
+      }
+      if (fwrite(&clusters_cnt, sizeof(size_t), 1, fptr) != 1) {
+        fclose(fptr);
+        return FAILURE;
+      }
+      return SUCCESS;
+      break;
+
+    default:
+      return FAILURE;
+      break;
+  }
 }

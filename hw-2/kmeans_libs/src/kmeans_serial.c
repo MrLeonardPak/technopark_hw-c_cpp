@@ -21,7 +21,7 @@ const float threshold = 0.01;
  * @return int
  */
 int CreatPoints(KMeans** kmeans, char const* file_name) {
-  if ((kmeans == NULL) || (*kmeans != NULL) || (file_name == NULL)) {
+  if ((kmeans == NULL) || (*kmeans != NULL)) {  // file_name проверит fopen()
     return FAILURE;
   }
 
@@ -62,7 +62,9 @@ int CreatPoints(KMeans** kmeans, char const* file_name) {
  * @return int
  */
 int StartAlgorithm(KMeans* kmeans) {
-  if (kmeans == NULL) {
+  if ((kmeans == NULL) || (kmeans->points_cnt == 0) ||
+      (kmeans->clusters_cnt == 0) ||
+      (kmeans->clusters_cnt > kmeans->points_cnt)) {
     return FAILURE;
   }
   // За первые центры кластеров берутся первые точки из данных
@@ -72,13 +74,11 @@ int StartAlgorithm(KMeans* kmeans) {
   // Условие выхода из цикла - алгоритм сошелся в какой-то диапазон
   size_t changed = 0;
   do {
-    if (ClusterSort(kmeans, 0, kmeans->points_cnt, &changed)) {
-      return FAILURE;
-    }
+    // Тут проверка возврата лишнее, тк всё необходимое же проверено
+    ClusterSort(kmeans, 0, kmeans->points_cnt, &changed);
     for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-      if (FindClusterCenter(kmeans, i)) {
-        return FAILURE;
-      }
+      // Тут проверка возврата лишнее, тк всё необходимое же проверено
+      FindClusterCenter(kmeans, i);
     }
   } while (((float)changed / (float)kmeans->points_cnt) > threshold);
 
