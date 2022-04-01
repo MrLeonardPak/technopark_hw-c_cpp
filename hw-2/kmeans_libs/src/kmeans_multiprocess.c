@@ -54,20 +54,26 @@ static void Handler(int sig_num) {
  * @param kmeans - должен быть пустым и NULL
  * @return int
  */
-int CreatPoints(KMeans** kmeans) {
-  if ((kmeans == NULL) || (*kmeans != NULL)) {
+int CreatPoints(KMeans** kmeans, char const* file_name) {
+  if ((kmeans == NULL) || (*kmeans != NULL) || (file_name == NULL)) {
     return FAILURE;
   }
   // TODO: Переписать под прием из файла
+  FILE* fptr = NULL;
+  fptr = fopen(file_name, "rb");
+  if (fptr == NULL) {
+    return FAILURE;
+  }
   // HACK: mmap и munmap стоит проверять на ошибку
   KMeans* tmp_kmeans =
       (KMeans*)mmap(NULL, sizeof(KMeans), PROT_READ | PROT_WRITE,
                     MAP_SHARED | MAP_ANON, -1, 0);
-  tmp_kmeans->clusters_cnt = 3;
-  tmp_kmeans->points_cnt = 12;
+  fread(&tmp_kmeans->points_cnt, sizeof(size_t), 1, fptr);
+  fread(&tmp_kmeans->clusters_cnt, sizeof(size_t), 1, fptr);
   // Кластеров не должно быть больше, чем самих точек
   if (tmp_kmeans->clusters_cnt > tmp_kmeans->points_cnt) {
     munmap(tmp_kmeans, sizeof(KMeans));
+    fclose(fptr);
     return FAILURE;
   }
   tmp_kmeans->points = (PointInCluster*)mmap(
@@ -76,21 +82,12 @@ int CreatPoints(KMeans** kmeans) {
   tmp_kmeans->clusters =
       (Point*)mmap(NULL, tmp_kmeans->clusters_cnt * sizeof(Point),
                    PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
-  for (size_t i = 0; i < 4; i++) {
-    tmp_kmeans->points[i].point.x = rand() % 50;
-    tmp_kmeans->points[i].point.y = rand() % 50;
-    tmp_kmeans->points[i].in_cluster = 0;
-
-    tmp_kmeans->points[i + 4].point.x = 100 + rand() % 50;
-    tmp_kmeans->points[i + 4].point.y = 100 + rand() % 50;
-    tmp_kmeans->points[i + 4].in_cluster = 0;
-
-    tmp_kmeans->points[i + 8].point.x = 1000 + rand() % 50;
-    tmp_kmeans->points[i + 8].point.y = 1000 + rand() % 50;
-    tmp_kmeans->points[i + 8].in_cluster = 0;
+  for (size_t i = 0; i < tmp_kmeans->points_cnt; ++i) {
+    fread(&tmp_kmeans->points[i].point, sizeof(Point), 1, fptr);
   }
 
   *kmeans = tmp_kmeans;
+  fclose(fptr);
   return SUCCESS;
 }
 
