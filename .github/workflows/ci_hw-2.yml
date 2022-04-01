@@ -66,6 +66,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: hw-2/build/coverage.info
+          flag-name: serial
 
   # Сборка многопроцессоной реализации
   multiprocess-build:
