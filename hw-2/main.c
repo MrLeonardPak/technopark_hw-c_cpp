@@ -27,7 +27,7 @@ int main() {
   }
   PrintClusters(kmeans);
   if (DeletePoints(&kmeans)) {
-    printf("Bad 4");
+    return -1;
   }
   return 0;
 }
