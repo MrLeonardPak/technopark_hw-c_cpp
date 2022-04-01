@@ -21,7 +21,7 @@ const float threshold = 0.01;
  * @return int
  */
 int CreatPoints(KMeans** kmeans, char const* file_name) {
-  if ((kmeans == NULL) || (*kmeans != NULL)) {  // file_name проверит fopen()
+  if ((kmeans == NULL) || (*kmeans != NULL) || (file_name == NULL)) {
     return FAILURE;
   }
 
