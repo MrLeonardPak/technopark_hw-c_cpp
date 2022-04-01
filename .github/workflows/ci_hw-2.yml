@@ -65,7 +65,7 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-path: hw-2
+          base-path: hw-2/
           path-to-lcov: hw-2/build/coverage.info
 
   # Сборка многопроцессоной реализации
