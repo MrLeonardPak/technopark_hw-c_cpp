@@ -18,16 +18,14 @@ int main() {
   KMeans* kmeans = NULL;
   char const* file_name = "/tmp/data.bin";
   if (CreatPoints(&kmeans, file_name)) {
-    printf("Bad 1");
+    return -1;
   }
   if (StartAlgorithm(kmeans)) {
-    printf("Bad 2");
+    if (DeletePoints(&kmeans)) {
+      return -1;
+    }
   }
-
-  if (PrintClusters(kmeans)) {
-    printf("Bad 3");
-  }
-
+  PrintClusters(kmeans);
   if (DeletePoints(&kmeans)) {
     printf("Bad 4");
   }
