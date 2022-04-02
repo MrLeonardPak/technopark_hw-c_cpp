@@ -46,7 +46,9 @@ TEST(MULTIPROCESS_TESTS, DeletePoints_TEST) {
 }
 
 TEST(MULTIPROCESS_TESTS, MAIN_TEST) {
-  int status = system("../hw-2");
+  int status = system("data/data 1 /tmp/data.bin");
+  ASSERT_EQ(status, 0);
+  status = system("../hw-2");
   ASSERT_EQ(status, 0);
 
   FILE* fptr = NULL;
