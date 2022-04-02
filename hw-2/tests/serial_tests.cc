@@ -48,7 +48,7 @@ TEST(SERIAL_TESTS, DeletePoints_TEST) {
 TEST(SERIAL_TESTS, MAIN_TEST) {
   int status = system("data/data 1 /tmp/data.bin");
   ASSERT_EQ(status, 0);
-  status = system("../hw-2");
+  status = system("../hw-2 /tmp/data.bin /tmp/out_data.bin");
   ASSERT_EQ(status, 0);
 
   FILE* fptr = NULL;

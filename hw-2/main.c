@@ -14,9 +14,13 @@
 
 #include "kmeans.h"
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc != 3) {
+    return -1;
+  }
+
   KMeans* kmeans = NULL;
-  char const* file_name = "/tmp/data.bin";
+  char const* file_name = argv[1];
   if (CreatPoints(&kmeans, file_name)) {
     return -1;
   }
@@ -25,7 +29,7 @@ int main() {
       return -1;
     }
   }
-  WriteClusters(kmeans, "/tmp/out_data.bin");
+  WriteClusters(kmeans, argv[2]);
   if (DeletePoints(&kmeans)) {
     return -1;
   }
