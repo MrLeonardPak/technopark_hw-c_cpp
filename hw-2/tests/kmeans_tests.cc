@@ -76,3 +76,13 @@ TEST(KMEANS_TESTS, ClusterSort_TEST) {
   free(kmeans->points);
   free(kmeans);
 }
+
+TEST(KMEANS_TESTS, WriteClusters_TEST) {
+  KMeans* kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
+  // Проверка на передачу NULL
+  EXPECT_EQ(FAILURE, WriteClusters(NULL, "file.bin"));
+  EXPECT_EQ(FAILURE, WriteClusters(kmeans, NULL));
+  EXPECT_EQ(FAILURE, WriteClusters(kmeans, ""));
+  // Освобождение памяти
+  free(kmeans);
+}

@@ -128,7 +128,7 @@ int FindClusterCenter(KMeans const* kmeans, size_t cluster_num) {
 }
 
 int WriteClusters(KMeans const* kmeans, char const* file_name) {
-  if (kmeans == NULL) {
+  if ((kmeans == NULL) || (file_name == NULL)) {
     return FAILURE;
   }
   FILE* fptr;
