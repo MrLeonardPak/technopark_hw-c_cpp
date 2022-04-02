@@ -32,7 +32,7 @@ jobs:
         run: |
           cd hw-2/build 
           make -j$(nproc)
-  serial-test-valgrind:
+  serial-tests-valgrind:
     runs-on: ubuntu-latest
     needs: [serial-build]
     steps:
@@ -67,7 +67,7 @@ jobs:
           path-to-lcov: hw-2/build/coverage.info
           flag-name: serial
           parallel: true 
-  serial-test-sanitize:
+  serial-tests-sanitize:
     runs-on: ubuntu-latest
     needs: [serial-build]
     steps:
@@ -177,7 +177,7 @@ jobs:
   # Завершения отправки покрытия
   finish:
     if: ${{ always() }}
-    needs: [serial-test-valgrind, multiprocess-test-valgrind]
+    needs: [serial-tests-valgrind, multiprocess-tests-valgrind]
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
