@@ -160,7 +160,7 @@ int StartAlgorithm(KMeans* kmeans) {
       msgctl(msgid, IPC_RMID, NULL);
       return FAILURE;
     }
-    printf("Killed %d\n", pids[i]);
+    // printf("Killed %d\n", pids[i]);
   }
 
   if (msgctl(msgid, IPC_RMID, NULL)) {
@@ -275,7 +275,7 @@ int StartChildWork(int msgid, KMeans* kmeans) {
         size_t start_batch = 0;
         size_t end_batch = 0;
         sscanf(recv_tmp, "%zu %zu", &start_batch, &end_batch);
-        printf("Received %zu %zu\n", start_batch, end_batch);
+        // printf("Received %zu %zu\n", start_batch, end_batch);
         size_t changed = 0;
         // Тут проверка возврата лишнее, тк всё необходимое же проверено
         ClusterSort(kmeans, start_batch, end_batch, &changed);
@@ -288,7 +288,7 @@ int StartChildWork(int msgid, KMeans* kmeans) {
         ReadMessage(msgid, recv_tmp, CENTER_MSG);
         size_t cnt = 0;
         sscanf(recv_tmp, "%zu", &cnt);
-        printf("Received %zu\n", cnt);
+        // printf("Received %zu\n", cnt);
         // Тут проверка возврата лишнее, тк всё необходимое же проверено
         FindClusterCenter(kmeans, cnt);
         SendMessage(msgid, TO_PARENT_MSG, "ok");
@@ -327,7 +327,7 @@ int InitProcesses(KMeans* kmeans,
     } else if (pids[i] == 0) {
       exit(StartChildWork(*msgid, kmeans));
     } else {
-      printf("Created process = %d\n", pids[i]);
+      // printf("Created process = %d\n", pids[i]);
     }
   }
   // Ждем, пока каждый процесс закончит свою инициализацию
