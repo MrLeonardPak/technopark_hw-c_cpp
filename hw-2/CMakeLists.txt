@@ -4,6 +4,7 @@ project(hw-2)
 option(TESTS "Do you want to build test?" OFF)
 option(WITH_STATIC_CHECKS "Do you want to use static checks?" OFF)
 option(MULTIPROCESS "Do you want to run multiprocessing?" OFF)
+option(SANITIZE "Do you want to run TESTS with sanitize?" OFF)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
@@ -16,6 +17,12 @@ else()
   set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wall -Wpedantic -Wextra -Werror -O0")
   set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS} "-Wall -Wpedantic -Wextra -Werror -O0")
 endif()
+
+if(SANITIZE)
+  string(APPEND CMAKE_C_FLAGS " -fsanitize=address,undefined,leak -fno-sanitize-recover=all -fsanitize-undefined-trap-on-error")
+  string(APPEND CMAKE_CXX_FLAGS " -fsanitize=address,undefined,leak -fno-sanitize-recover=all -fsanitize-undefined-trap-on-error")
+endif()
+
 
 add_subdirectory(kmeans_libs)
 
