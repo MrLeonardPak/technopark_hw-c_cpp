@@ -139,9 +139,20 @@ int StartAlgorithm(KMeans* kmeans) {
   size_t changed = 0;
   do {
     // Начинаем фазу 1: сортировки точек по кластерам
-    PhaseSortClusters(kmeans, msgid, process_cnt, pids, &changed);
+    if (PhaseSortClusters(kmeans, msgid, process_cnt, pids, &changed)) {
+      for (size_t i = 0; i < process_cnt; ++i) {
+        kill(pids[i], SIGKILL);
+      }
+      return FAILURE;
+    }
+
     // Начинаем фазу 2: поиск центра для каждого кластера
-    PhaseFindCenter(kmeans, msgid, process_cnt, pids);
+    if (PhaseFindCenter(kmeans, msgid, process_cnt, pids)) {
+      for (size_t i = 0; i < process_cnt; ++i) {
+        kill(pids[i], SIGKILL);
+      }
+      return FAILURE;
+    }
   } while (((float)changed / (float)kmeans->points_cnt) > threshold);
 
   for (size_t i = 0; i < process_cnt; ++i) {
@@ -301,13 +312,17 @@ int InitProcesses(KMeans* kmeans,
     return FAILURE;
   }
 
-  // HACK: Стоит проверить успех создания очереди
   *msgid = msgget(IPC_PRIVATE, IPC_CREAT | 0660);
+  if (*msgid == -1) {
+    return FAILURE;
+  }
   for (size_t i = 0; i < process_cnt; ++i) {
     pids[i] = fork();
     if (pids[i] == -1) {
-      printf("fork failed\n");
-      // HACK: Стоит убить уже созданные процессы
+      // Не получается создать нужное количество процессов - завершить все
+      for (size_t j = 0; j < i; ++j) {
+        kill(pids[j], SIGKILL);
+      }
       return FAILURE;
     } else if (pids[i] == 0) {
       exit(StartChildWork(*msgid, kmeans));
@@ -351,8 +366,9 @@ int PhaseSortClusters(KMeans* kmeans,
     end_batch =
         start_batch + (kmeans->points_cnt - start_batch) / (process_cnt - i);
     snprintf(send_tmp, MAX_SEND_SIZE, "%zu %zu", start_batch, end_batch);
-    // HACK: Стоит проверить на возврат с ошибкой
-    SendMessage(msgid, SORT_MSG, send_tmp);
+    if (SendMessage(msgid, SORT_MSG, send_tmp)) {
+      return FAILURE;
+    }
   }
   size_t changed_tmp = 0;
   *changed = 0;
@@ -375,13 +391,15 @@ int PhaseFindCenter(KMeans* kmeans,
   char send_tmp[MAX_SEND_SIZE] = {0};
   char recv_tmp[MAX_SEND_SIZE] = {0};
   for (size_t i = 0; i < process_cnt; ++i) {
-    // HACK: Стоит проверить на возврат с ошибкой
-    kill(pids[i], SIGUSR2);
+    if (kill(pids[i], SIGUSR2)) {
+      return FAILURE;
+    }
   }
   for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
     snprintf(send_tmp, MAX_SEND_SIZE, "%zu", i);
-    // HACK: Стоит проверить на возврат с ошибкой
-    SendMessage(msgid, CENTER_MSG, send_tmp);
+    if (SendMessage(msgid, CENTER_MSG, send_tmp)) {
+      return FAILURE;
+    }
   }
   for (size_t i = 0; i < process_cnt; ++i) {
     ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
