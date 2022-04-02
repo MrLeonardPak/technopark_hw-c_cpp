@@ -26,7 +26,9 @@ typedef struct Point {
 
 static int CreatData(char const* file_name,
                      size_t points_cnt,
-                     size_t clusters_cnt);
+                     size_t clusters_cnt,
+                     int shift,
+                     int dispersion);
 static int WritePoint(FILE* fptr, int lower_limit, int upper_limit);
 static int CreatFasleData(char const* file_name, int error_type);
 
@@ -39,10 +41,10 @@ int main(int argc, char* argv[]) {
   int rtn = 0;
   switch (type) {
     case 0:
-      rtn = CreatData(argv[2], 33000000, 5);
+      rtn = CreatData(argv[2], 33000000, 10, 1000000, 500000);
       break;
     case 1:
-      rtn = CreatData(argv[2], 12, 3);
+      rtn = CreatData(argv[2], 12, 3, 2000, 1000);
       break;
     case 2:
       rtn = CreatFasleData(argv[2], type);
@@ -56,7 +58,9 @@ int main(int argc, char* argv[]) {
 
 static int CreatData(char const* file_name,
                      size_t points_cnt,
-                     size_t clusters_cnt) {
+                     size_t clusters_cnt,
+                     int shift,
+                     int dispersion) {
   FILE* fptr;
   fptr = fopen(file_name, "wb");
   if (fptr == NULL) {
@@ -74,8 +78,6 @@ static int CreatData(char const* file_name,
 
   size_t start_cluster = 0;
   size_t end_cluster = 0;
-  const int shift = 2000;
-  const int dispersion = 1000;
   for (size_t i = 0; i < clusters_cnt; ++i) {
     start_cluster = end_cluster;
     // Таким подсчетом откусывается всегда "поровну" для всех оставшихся
@@ -83,7 +85,7 @@ static int CreatData(char const* file_name,
     end_cluster =
         start_cluster + (points_cnt - start_cluster) / (clusters_cnt - i);
     for (size_t j = start_cluster; j < end_cluster; ++j) {
-      if (WritePoint(fptr, i + i * shift, dispersion)) {
+      if (WritePoint(fptr, i * shift, dispersion)) {
         fclose(fptr);
         return FAILURE;
       }

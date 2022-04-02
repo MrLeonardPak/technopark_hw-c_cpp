@@ -15,6 +15,11 @@
 const float threshold = 0.1;
 static int phase_num = 0;
 
+/**
+ * @brief Обработчик прерываний
+ *
+ * @param sig_num
+ */
 static void Handler(int sig_num) {
   switch (sig_num) {
     case SIGUSR1:
@@ -154,15 +159,14 @@ int StartAlgorithm(KMeans* kmeans) {
       return FAILURE;
     }
   } while (((float)changed / (float)kmeans->points_cnt) > threshold);
-
+  // Выключаем процессы, удаляем очередь
   for (size_t i = 0; i < process_cnt; ++i) {
     if (kill(pids[i], SIGTERM)) {
       msgctl(msgid, IPC_RMID, NULL);
       return FAILURE;
     }
-    // printf("Killed %d\n", pids[i]);
+    printf("Killed %d\n", pids[i]);
   }
-
   if (msgctl(msgid, IPC_RMID, NULL)) {
     return FAILURE;
   }
@@ -275,7 +279,7 @@ int StartChildWork(int msgid, KMeans* kmeans) {
         size_t start_batch = 0;
         size_t end_batch = 0;
         sscanf(recv_tmp, "%zu %zu", &start_batch, &end_batch);
-        // printf("Received %zu %zu\n", start_batch, end_batch);
+        printf("Received %zu %zu\n", start_batch, end_batch);
         size_t changed = 0;
         // Тут проверка возврата лишнее, тк всё необходимое же проверено
         ClusterSort(kmeans, start_batch, end_batch, &changed);
@@ -288,7 +292,7 @@ int StartChildWork(int msgid, KMeans* kmeans) {
         ReadMessage(msgid, recv_tmp, CENTER_MSG);
         size_t cnt = 0;
         sscanf(recv_tmp, "%zu", &cnt);
-        // printf("Received %zu\n", cnt);
+        printf("Received %zu\n", cnt);
         // Тут проверка возврата лишнее, тк всё необходимое же проверено
         FindClusterCenter(kmeans, cnt);
         SendMessage(msgid, TO_PARENT_MSG, "ok");
@@ -304,6 +308,15 @@ int StartChildWork(int msgid, KMeans* kmeans) {
   return SUCCESS;
 }
 
+/**
+ * @brief Запуск дочерних процессов и синхронизация с ними
+ *
+ * @param kmeans
+ * @param msgid
+ * @param pids
+ * @param process_cnt
+ * @return int
+ */
 int InitProcesses(KMeans* kmeans,
                   int* msgid,
                   int* pids,
@@ -327,7 +340,7 @@ int InitProcesses(KMeans* kmeans,
     } else if (pids[i] == 0) {
       exit(StartChildWork(*msgid, kmeans));
     } else {
-      // printf("Created process = %d\n", pids[i]);
+      printf("Created process = %d\n", pids[i]);
     }
   }
   // Ждем, пока каждый процесс закончит свою инициализацию
@@ -342,6 +355,16 @@ int InitProcesses(KMeans* kmeans,
   return SUCCESS;
 }
 
+/**
+ * @brief Фаза сортировки точек по кластерам
+ *
+ * @param kmeans
+ * @param msgid
+ * @param process_cnt
+ * @param pids
+ * @param changed
+ * @return int
+ */
 int PhaseSortClusters(KMeans* kmeans,
                       int const msgid,
                       size_t const process_cnt,
@@ -354,11 +377,13 @@ int PhaseSortClusters(KMeans* kmeans,
 
   char send_tmp[MAX_SEND_SIZE] = {0};
   char recv_tmp[MAX_SEND_SIZE] = {0};
+  // Запускаем первую фазу на дочерних процессах
   for (size_t i = 0; i < process_cnt; ++i) {
     kill(pids[i], SIGUSR1);
   }
   size_t start_batch = 0;
   size_t end_batch = 0;
+  // Отправляем диапазоны батчей
   for (size_t i = 0; i < process_cnt; ++i) {
     start_batch = end_batch;
     // Таким подсчетом откусывается всегда "поровну" для всех оставшихся
@@ -372,6 +397,7 @@ int PhaseSortClusters(KMeans* kmeans,
   }
   size_t changed_tmp = 0;
   *changed = 0;
+  // Ожидаем результат от дочерних процессов
   for (size_t i = 0; i < process_cnt; ++i) {
     ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
     sscanf(recv_tmp, "%zu", &changed_tmp);
@@ -380,6 +406,15 @@ int PhaseSortClusters(KMeans* kmeans,
   return SUCCESS;
 }
 
+/**
+ * @brief Фаза поиска центра каждого кластера
+ *
+ * @param kmeans
+ * @param msgid
+ * @param process_cnt
+ * @param pids
+ * @return int
+ */
 int PhaseFindCenter(KMeans* kmeans,
                     int const msgid,
                     size_t const process_cnt,
@@ -390,17 +425,20 @@ int PhaseFindCenter(KMeans* kmeans,
 
   char send_tmp[MAX_SEND_SIZE] = {0};
   char recv_tmp[MAX_SEND_SIZE] = {0};
+  // Запускаем вторую фазу на дочерних процессах
   for (size_t i = 0; i < process_cnt; ++i) {
     if (kill(pids[i], SIGUSR2)) {
       return FAILURE;
     }
   }
+  // Передаем номер кластера
   for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
     snprintf(send_tmp, MAX_SEND_SIZE, "%zu", i);
     if (SendMessage(msgid, CENTER_MSG, send_tmp)) {
       return FAILURE;
     }
   }
+  // Ожидаем ответ от дочерних процессов
   for (size_t i = 0; i < process_cnt; ++i) {
     ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
   }

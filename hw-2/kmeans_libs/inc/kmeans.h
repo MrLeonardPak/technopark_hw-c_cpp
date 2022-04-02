@@ -47,7 +47,7 @@ int ClusterSort(KMeans* kmeans,
                 size_t* changed_test);
 int FindClusterCenter(KMeans const* kmeans, size_t cluster_num);
 int WriteClusters(KMeans const* kmeans, char const* file_name);
-// Разные реализации
+// Разная реализация
 int CreatPoints(KMeans** kmeans, char const* file_name);
 int StartAlgorithm(KMeans* kmeans);
 int DeletePoints(KMeans** kmeans);

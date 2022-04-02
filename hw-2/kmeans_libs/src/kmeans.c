@@ -109,24 +109,34 @@ int FindClusterCenter(KMeans const* kmeans, size_t cluster_num) {
   }
 
   size_t point_in_cluster_cnt = 0;
-  Point sum = {0, 0, 0};
+  unsigned long long point_x = 0;
+  unsigned long long point_y = 0;
+  unsigned long long point_z = 0;
+
   for (size_t i = 0; i < kmeans->points_cnt; ++i) {
     if (kmeans->points[i].in_cluster == cluster_num) {
-      sum.x += kmeans->points[i].point.x;
-      sum.y += kmeans->points[i].point.y;
-      sum.z += kmeans->points[i].point.z;
+      point_x += kmeans->points[i].point.x;
+      point_y += kmeans->points[i].point.y;
+      point_z += kmeans->points[i].point.z;
       ++point_in_cluster_cnt;
     }
   }
   if (point_in_cluster_cnt > 0) {
-    kmeans->clusters[cluster_num].x = sum.x / point_in_cluster_cnt;
-    kmeans->clusters[cluster_num].y = sum.y / point_in_cluster_cnt;
-    kmeans->clusters[cluster_num].z = sum.z / point_in_cluster_cnt;
+    kmeans->clusters[cluster_num].x = point_x / point_in_cluster_cnt;
+    kmeans->clusters[cluster_num].y = point_y / point_in_cluster_cnt;
+    kmeans->clusters[cluster_num].z = point_z / point_in_cluster_cnt;
   }
 
   return SUCCESS;
 }
 
+/**
+ * @brief Записывает результат в бинарный файл
+ *
+ * @param kmeans
+ * @param file_name
+ * @return int
+ */
 int WriteClusters(KMeans const* kmeans, char const* file_name) {
   if ((kmeans == NULL) || (file_name == NULL)) {
     return FAILURE;
@@ -136,6 +146,7 @@ int WriteClusters(KMeans const* kmeans, char const* file_name) {
   if (fptr == NULL) {
     return FAILURE;
   }
+  // Количество кластеров
   if (fwrite(&kmeans->clusters_cnt, sizeof(size_t), 1, fptr) != 1) {
     fclose(fptr);
     return FAILURE;
@@ -147,14 +158,17 @@ int WriteClusters(KMeans const* kmeans, char const* file_name) {
         ++tmp_cnt;
       }
     }
+    // Количество точек в кластере
     if (fwrite(&tmp_cnt, sizeof(size_t), 1, fptr) != 1) {
       fclose(fptr);
       return FAILURE;
     }
+    // Центр кластера
     if (fwrite(&kmeans->clusters[i], sizeof(Point), 1, fptr) != 1) {
       fclose(fptr);
       return FAILURE;
     }
+    // Точки кластера
     for (size_t j = 0; j < kmeans->points_cnt; ++j) {
       if (kmeans->points[j].in_cluster == i) {
         if (fwrite(&kmeans->points[j].point, sizeof(Point), 1, fptr) != 1) {
