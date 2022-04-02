@@ -177,7 +177,7 @@ jobs:
   # Завершения отправки покрытия
   finish:
     if: ${{ always() }}
-    needs: [serial-test, multiprocess-test]
+    needs: [serial-test-valgrind, multiprocess-test-valgrind]
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
