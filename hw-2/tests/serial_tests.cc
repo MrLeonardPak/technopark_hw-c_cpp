@@ -46,12 +46,52 @@ TEST(SERIAL_TESTS, DeletePoints_TEST) {
 }
 
 TEST(SERIAL_TESTS, MAIN_TEST) {
-  KMeans* kmeans = NULL;
-  int status = system("data/data 1 /tmp/data.bin");
+  int status = system("../hw-2");
   ASSERT_EQ(status, 0);
-  // Проверка на полную работу
-  ASSERT_EQ(SUCCESS, CreatPoints(&kmeans, "/tmp/data.bin"));
-  EXPECT_EQ(SUCCESS, StartAlgorithm(kmeans));
-  EXPECT_EQ(SUCCESS, PrintClusters(kmeans));
-  EXPECT_EQ(SUCCESS, DeletePoints(&kmeans));
+
+  FILE* fptr = NULL;
+  fptr = fopen("/tmp/out_data.bin", "rb");
+  if (fptr == NULL) {
+    FAIL();
+  }
+  size_t clusters_cnt = 0;
+  if (fread(&clusters_cnt, sizeof(size_t), 1, fptr)) {
+    fclose(fptr);
+    FAIL();
+  }
+
+  int delta_x = 0;
+  int delta_y = 0;
+  int delta_z = 0;
+  for (size_t i = 0; i < clusters_cnt; ++i) {
+    size_t points_cnt = 0;
+    if (fread(&points_cnt, sizeof(size_t), 1, fptr)) {
+      fclose(fptr);
+      FAIL();
+    }
+    Point cluster;
+    if (fread(&cluster, sizeof(Point), 1, fptr)) {
+      fclose(fptr);
+      FAIL();
+    }
+    for (size_t j = 0; j < points_cnt; ++j) {
+      Point point;
+      if (fread(&point, sizeof(Point), 1, fptr)) {
+        fclose(fptr);
+        FAIL();
+      }
+      // Тестовые данные сгенерированны так, что разброс не больше 1000, сдвиг
+      // 2000. Поэтому проверка на дальность от центра на 1000 (с запасом)
+      delta_x = abs(cluster.x - point.x);
+      delta_y = abs(cluster.y - point.y);
+      delta_z = abs(cluster.z - point.z);
+      EXPECT_LT(delta_x, 1000);
+      EXPECT_LT(delta_y, 1000);
+      EXPECT_LT(delta_z, 1000);
+    }
+  }
+
+  if (fclose(fptr)) {
+    FAIL();
+  }
 }

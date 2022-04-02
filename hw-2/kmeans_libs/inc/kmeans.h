@@ -46,9 +46,9 @@ int ClusterSort(KMeans* kmeans,
                 size_t batch_end,
                 size_t* changed_test);
 int FindClusterCenter(KMeans const* kmeans, size_t cluster_num);
-int DeletePoints(KMeans** kmeans);
+int WriteClusters(KMeans const* kmeans, char const* file_name);
 // Разные реализации
 int CreatPoints(KMeans** kmeans, char const* file_name);
 int StartAlgorithm(KMeans* kmeans);
-int PrintClusters(KMeans const* kmeans);
+int DeletePoints(KMeans** kmeans);
 #endif  // HW2_KMEANS_H

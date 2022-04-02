@@ -25,7 +25,7 @@ int main() {
       return -1;
     }
   }
-  PrintClusters(kmeans);
+  WriteClusters(kmeans, "/tmp/out_data.bin");
   if (DeletePoints(&kmeans)) {
     return -1;
   }

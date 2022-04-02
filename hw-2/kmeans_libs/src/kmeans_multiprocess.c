@@ -136,7 +136,6 @@ void ReadMessage(int qid, char* text, long type) {
  * @param kmeans
  */
 void StartChildWork(int msgid, KMeans* kmeans) {
-  puts("Child start");
   char send_tmp[MAX_SEND_SIZE] = {0};
   char recv_tmp[MAX_SEND_SIZE] = {0};
   // Для синхронизации с родителем
@@ -155,10 +154,8 @@ void StartChildWork(int msgid, KMeans* kmeans) {
         sscanf(recv_tmp, "%zu %zu", &start_batch, &end_batch);
         printf("Received %zu %zu\n", start_batch, end_batch);
         size_t changed = 0;
-        // HACK: Стоит проверить на возврат с ошибкой
-        if (ClusterSort(kmeans, start_batch, end_batch, &changed)) {
-          printf("ClusterSort error\n");
-        }
+        // Тут проверка возврата лишнее, тк всё необходимое же проверено
+        ClusterSort(kmeans, start_batch, end_batch, &changed);
         snprintf(send_tmp, MAX_SEND_SIZE, "%zu", changed);
         SendMessage(msgid, TO_PARENT_MSG, send_tmp);
         phase_num = 0;
@@ -169,10 +166,8 @@ void StartChildWork(int msgid, KMeans* kmeans) {
         size_t cnt = 0;
         sscanf(recv_tmp, "%zu", &cnt);
         printf("Received %zu\n", cnt);
-        // HACK: Стоит проверить на возврат с ошибкой
-        if (FindClusterCenter(kmeans, cnt)) {
-          printf("FindClusterCenter error\n");
-        }
+        // Тут проверка возврата лишнее, тк всё необходимое же проверено
+        FindClusterCenter(kmeans, cnt);
         SendMessage(msgid, TO_PARENT_MSG, "ok");
         phase_num = 0;
         break;
@@ -184,27 +179,16 @@ void StartChildWork(int msgid, KMeans* kmeans) {
   exit(0);
 }
 
-/**
- * @brief Запуск алгоритма
- *
- * @param kmeans
- * @return int
- */
-int StartAlgorithm(KMeans* kmeans) {
-  if (kmeans == NULL) {
+int InitProcesses(KMeans* kmeans,
+                  int* msgid,
+                  int* pids,
+                  size_t const process_cnt) {
+  if ((kmeans == NULL) || (pids == NULL) || (msgid == NULL)) {
     return FAILURE;
   }
-  // За первые центры кластеров берутся первые точки из данных
-  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-    kmeans->clusters[i] = kmeans->points[i].point;
-  }
 
-  // TODO: Можно и больше процессов создать
-  size_t process_cnt = kmeans->clusters_cnt;
-
-  int pids[process_cnt];
   // HACK: Стоит проверить успех создания очереди
-  int msgid = msgget(IPC_PRIVATE, IPC_CREAT | 0660);
+  *msgid = msgget(IPC_PRIVATE, IPC_CREAT | 0660);
   for (size_t i = 0; i < process_cnt; ++i) {
     pids[i] = fork();
     if (pids[i] == -1) {
@@ -212,13 +196,11 @@ int StartAlgorithm(KMeans* kmeans) {
       // HACK: Стоит убить уже созданные процессы
       return FAILURE;
     } else if (pids[i] == 0) {
-      StartChildWork(msgid, kmeans);
+      StartChildWork(*msgid, kmeans);
     } else {
       printf("Created process = %d\n", pids[i]);
     }
   }
-  char send_tmp[MAX_SEND_SIZE] = {0};
-  char recv_tmp[MAX_SEND_SIZE] = {0};
   // Ждем, пока каждый процесс закончит свою инициализацию
   for (size_t i = 0; i < process_cnt; ++i) {
     int status = 0;
@@ -228,48 +210,101 @@ int StartAlgorithm(KMeans* kmeans) {
   for (size_t i = 0; i < process_cnt; ++i) {
     kill(pids[i], SIGCONT);
   }
+  return SUCCESS;
+}
+
+int PhaseSortClusters(KMeans* kmeans,
+                      int const msgid,
+                      size_t const process_cnt,
+                      int const* pids,
+                      size_t* changed) {
+  if ((kmeans == NULL) || (pids == NULL) || (changed == NULL)) {
+    return FAILURE;
+  }
+
+  char send_tmp[MAX_SEND_SIZE] = {0};
+  char recv_tmp[MAX_SEND_SIZE] = {0};
+  for (size_t i = 0; i < process_cnt; ++i) {
+    kill(pids[i], SIGUSR1);
+  }
+  size_t start_batch = 0;
+  size_t end_batch = 0;
+  for (size_t i = 0; i < process_cnt; ++i) {
+    start_batch = end_batch;
+    // Таким подсчетом откусывается всегда "поровну" для всех оставшихся
+    // процессов
+    end_batch =
+        start_batch + (kmeans->points_cnt - start_batch) / (process_cnt - i);
+    snprintf(send_tmp, MAX_SEND_SIZE, "%zu %zu", start_batch, end_batch);
+    // HACK: Стоит проверить на возврат с ошибкой
+    SendMessage(msgid, SORT_MSG, send_tmp);
+  }
+  size_t changed_tmp = 0;
+  *changed = 0;
+  for (size_t i = 0; i < process_cnt; ++i) {
+    ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
+    sscanf(recv_tmp, "%zu", &changed_tmp);
+    *changed += changed_tmp;
+  }
+  return SUCCESS;
+}
+
+int PhaseFindCenter(KMeans* kmeans,
+                    int const msgid,
+                    size_t const process_cnt,
+                    int const* pids) {
+  if ((kmeans == NULL) || (pids == NULL)) {
+    return FAILURE;
+  }
+
+  char send_tmp[MAX_SEND_SIZE] = {0};
+  char recv_tmp[MAX_SEND_SIZE] = {0};
+  for (size_t i = 0; i < process_cnt; ++i) {
+    // HACK: Стоит проверить на возврат с ошибкой
+    kill(pids[i], SIGUSR2);
+  }
+  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
+    snprintf(send_tmp, MAX_SEND_SIZE, "%zu", i);
+    // HACK: Стоит проверить на возврат с ошибкой
+    SendMessage(msgid, CENTER_MSG, send_tmp);
+  }
+  for (size_t i = 0; i < process_cnt; ++i) {
+    ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
+  }
+  return SUCCESS;
+}
+
+/**
+ * @brief Запуск алгоритма
+ *
+ * @param kmeans
+ * @return int
+ */
+int StartAlgorithm(KMeans* kmeans) {
+  if ((kmeans == NULL) || (kmeans->points_cnt == 0) ||
+      (kmeans->clusters_cnt == 0) ||
+      (kmeans->clusters_cnt > kmeans->points_cnt)) {
+    return FAILURE;
+  }
+  // За первые центры кластеров берутся первые точки из данных
+  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
+    kmeans->clusters[i] = kmeans->points[i].point;
+  }
+
+  size_t process_cnt = kmeans->clusters_cnt;
+  int pids[process_cnt];
+  int msgid = 0;
+
+  if (InitProcesses(kmeans, &msgid, pids, process_cnt)) {
+    return FAILURE;
+  }
 
   size_t changed = 0;
   do {
-    // for (size_t kl = 0; kl < 3; kl++) {
     // Начинаем фазу 1: сортировки точек по кластерам
-    for (size_t i = 0; i < process_cnt; ++i) {
-      kill(pids[i], SIGUSR1);
-    }
-    size_t start_batch = 0;
-    size_t end_batch = 0;
-    for (size_t i = 0; i < process_cnt; ++i) {
-      start_batch = end_batch;
-      // Таким подсчетом откусывается всегда "поровну" для всех оставшихся
-      // процессов
-      end_batch =
-          start_batch + (kmeans->points_cnt - start_batch) / (process_cnt - i);
-      snprintf(send_tmp, MAX_SEND_SIZE, "%zu %zu", start_batch, end_batch);
-      // HACK: Стоит проверить на возврат с ошибкой
-      SendMessage(msgid, SORT_MSG, send_tmp);
-      // printf("Send %zu %zu\n", start_batch, end_batch);
-    }
-    size_t changed_tmp = 0;
-    changed = 0;
-    for (size_t i = 0; i < process_cnt; ++i) {
-      ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
-      sscanf(recv_tmp, "%zu", &changed_tmp);
-      changed += changed_tmp;
-    }
-
+    PhaseSortClusters(kmeans, msgid, process_cnt, pids, &changed);
     // Начинаем фазу 2: поиск центра для каждого кластера
-    for (size_t i = 0; i < process_cnt; ++i) {
-      // HACK: Стоит проверить на возврат с ошибкой
-      kill(pids[i], SIGUSR2);
-    }
-    for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-      snprintf(send_tmp, MAX_SEND_SIZE, "%zu", i);
-      // HACK: Стоит проверить на возврат с ошибкой
-      SendMessage(msgid, CENTER_MSG, send_tmp);
-    }
-    for (size_t i = 0; i < process_cnt; ++i) {
-      ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
-    }
+    PhaseFindCenter(kmeans, msgid, process_cnt, pids);
   } while (((float)changed / (float)kmeans->points_cnt) > threshold);
 
   for (size_t i = 0; i < process_cnt; ++i) {

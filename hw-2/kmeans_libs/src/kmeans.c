@@ -127,20 +127,50 @@ int FindClusterCenter(KMeans const* kmeans, size_t cluster_num) {
   return SUCCESS;
 }
 
-int PrintClusters(KMeans const* kmeans) {
+int WriteClusters(KMeans const* kmeans, char const* file_name) {
   if (kmeans == NULL) {
     return FAILURE;
   }
-
+  FILE* fptr;
+  fptr = fopen(file_name, "wb");
+  if (fptr == NULL) {
+    return FAILURE;
+  }
+  if (fwrite(&kmeans->clusters_cnt, sizeof(size_t), 1, fptr) != 1) {
+    fclose(fptr);
+    return FAILURE;
+  }
   for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-    printf("num: %zu, x: %d, y: %d\n", i, kmeans->clusters[i].x,
-           kmeans->clusters[i].y);
+    size_t tmp_cnt = 0;
     for (size_t j = 0; j < kmeans->points_cnt; ++j) {
       if (kmeans->points[j].in_cluster == i) {
-        printf("x: %d, y: %d\n", kmeans->points[j].point.x,
-               kmeans->points[j].point.y);
+        ++tmp_cnt;
       }
     }
+    if (fwrite(&tmp_cnt, sizeof(size_t), 1, fptr) != 1) {
+      fclose(fptr);
+      return FAILURE;
+    }
+    if (fwrite(&kmeans->clusters[i], sizeof(Point), 1, fptr) != 1) {
+      fclose(fptr);
+      return FAILURE;
+    }
+    for (size_t j = 0; j < kmeans->points_cnt; ++j) {
+      if (kmeans->points[j].in_cluster == i) {
+        if (fwrite(&kmeans->points[j].point, sizeof(Point), 1, fptr) != 1) {
+          fclose(fptr);
+          return FAILURE;
+        }
+      }
+    }
+  }
+  char eof = '\0';
+  if (fputc(eof, fptr) != eof) {
+    fclose(fptr);
+    return FAILURE;
+  }
+  if (fclose(fptr)) {
+    return FAILURE;
   }
   return SUCCESS;
 }
