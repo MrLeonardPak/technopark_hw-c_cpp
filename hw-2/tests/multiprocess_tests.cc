@@ -57,7 +57,7 @@ TEST(MULTIPROCESS_TESTS, MAIN_TEST) {
     FAIL();
   }
   size_t clusters_cnt = 0;
-  if (fread(&clusters_cnt, sizeof(size_t), 1, fptr)) {
+  if (fread(&clusters_cnt, sizeof(size_t), 1, fptr) != 1) {
     fclose(fptr);
     FAIL();
   }
@@ -67,18 +67,18 @@ TEST(MULTIPROCESS_TESTS, MAIN_TEST) {
   int delta_z = 0;
   for (size_t i = 0; i < clusters_cnt; ++i) {
     size_t points_cnt = 0;
-    if (fread(&points_cnt, sizeof(size_t), 1, fptr)) {
+    if (fread(&points_cnt, sizeof(size_t), 1, fptr) != 1) {
       fclose(fptr);
       FAIL();
     }
     Point cluster;
-    if (fread(&cluster, sizeof(Point), 1, fptr)) {
+    if (fread(&cluster, sizeof(Point), 1, fptr) != 1) {
       fclose(fptr);
       FAIL();
     }
     for (size_t j = 0; j < points_cnt; ++j) {
       Point point;
-      if (fread(&point, sizeof(Point), 1, fptr)) {
+      if (fread(&point, sizeof(Point), 1, fptr) != 1) {
         fclose(fptr);
         FAIL();
       }
