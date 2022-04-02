@@ -10,26 +10,7 @@
  *
  */
 
-#include "kmeans.h"
-
-#include <signal.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/msg.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
-#define MAX_SEND_SIZE 80
-
-#define SORT_MSG 100
-#define CENTER_MSG 200
-#define TO_PARENT_MSG 300
-
-typedef struct MsgBuf {
-  long mtype;
-  char mtext[MAX_SEND_SIZE];
-} MsgBuf;
+#include "kmeans_multiprocess.h"
 
 const float threshold = 0.1;
 static int phase_num = 0;
@@ -43,7 +24,7 @@ static void Handler(int sig_num) {
       phase_num = 2;
       break;
     case SIGTERM:
-      exit(0);
+      phase_num = 3;
       break;
     default:
       signal(sig_num, SIG_DFL);
@@ -68,33 +49,148 @@ int CreatPoints(KMeans** kmeans, char const* file_name) {
   if (fptr == NULL) {
     return FAILURE;
   }
-  // HACK: mmap и munmap стоит проверять на ошибку
   KMeans* tmp_kmeans =
-      (KMeans*)mmap(NULL, sizeof(KMeans), PROT_READ | PROT_WRITE,
+      (KMeans*)mmap(NULL, 1 * sizeof(KMeans), PROT_READ | PROT_WRITE,
                     MAP_SHARED | MAP_ANON, -1, 0);
+  if (tmp_kmeans == MAP_FAILED) {
+    fclose(fptr);
+    return FAILURE;
+  }
   // В начале файла расположены количество точек и необходимое число кластеров
-  fread(&tmp_kmeans->points_cnt, sizeof(size_t), 1, fptr);
-  fread(&tmp_kmeans->clusters_cnt, sizeof(size_t), 1, fptr);
+  if (fread(&tmp_kmeans->points_cnt, sizeof(size_t), 1, fptr) != 1) {
+    fclose(fptr);
+    munmap(tmp_kmeans, 1 * sizeof(KMeans));
+    return FAILURE;
+  };
+  if (fread(&tmp_kmeans->clusters_cnt, sizeof(size_t), 1, fptr) != 1) {
+    fclose(fptr);
+    munmap(tmp_kmeans, 1 * sizeof(KMeans));
+    return FAILURE;
+  };
   // Кластеров не должно быть больше, чем самих точек
   if (tmp_kmeans->clusters_cnt > tmp_kmeans->points_cnt) {
-    munmap(tmp_kmeans, sizeof(KMeans));
     fclose(fptr);
+    munmap(tmp_kmeans, 1 * sizeof(KMeans));
     return FAILURE;
   }
   tmp_kmeans->points = (PointInCluster*)mmap(
       NULL, tmp_kmeans->points_cnt * sizeof(PointInCluster),
       PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+  if (tmp_kmeans->points == MAP_FAILED) {
+    fclose(fptr);
+    munmap(tmp_kmeans, 1 * sizeof(KMeans));
+    return FAILURE;
+  }
   tmp_kmeans->clusters =
       (Point*)mmap(NULL, tmp_kmeans->clusters_cnt * sizeof(Point),
                    PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+  if (tmp_kmeans->clusters == MAP_FAILED) {
+    fclose(fptr);
+    munmap(tmp_kmeans->points, tmp_kmeans->points_cnt * sizeof(PointInCluster));
+    munmap(tmp_kmeans, 1 * sizeof(KMeans));
+    return FAILURE;
+  }
   // Далее расположены сами точки
   for (size_t i = 0; i < tmp_kmeans->points_cnt; ++i) {
-    fread(&tmp_kmeans->points[i].point, sizeof(Point), 1, fptr);
+    if (fread(&tmp_kmeans->points[i].point, sizeof(Point), 1, fptr) != 1) {
+      fclose(fptr);
+      munmap(tmp_kmeans->clusters, tmp_kmeans->clusters_cnt * sizeof(Point));
+      munmap(tmp_kmeans->points,
+             tmp_kmeans->points_cnt * sizeof(PointInCluster));
+      munmap(tmp_kmeans, 1 * sizeof(KMeans));
+      return FAILURE;
+    };
   }
 
   *kmeans = tmp_kmeans;
-  fclose(fptr);
+  if (fclose(fptr)) {
+    munmap(tmp_kmeans->clusters, tmp_kmeans->clusters_cnt * sizeof(Point));
+    munmap(tmp_kmeans->points, tmp_kmeans->points_cnt * sizeof(PointInCluster));
+    munmap(tmp_kmeans, 1 * sizeof(KMeans));
+    return FAILURE;
+  };
   return SUCCESS;
+}
+
+/**
+ * @brief Запуск алгоритма
+ *
+ * @param kmeans
+ * @return int
+ */
+int StartAlgorithm(KMeans* kmeans) {
+  if ((kmeans == NULL) || (kmeans->points_cnt == 0) ||
+      (kmeans->clusters_cnt == 0) ||
+      (kmeans->clusters_cnt > kmeans->points_cnt)) {
+    return FAILURE;
+  }
+  // За первые центры кластеров берутся первые точки из данных
+  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
+    kmeans->clusters[i] = kmeans->points[i].point;
+  }
+
+  size_t process_cnt = kmeans->clusters_cnt;
+  int pids[process_cnt];
+  int msgid = 0;
+  if (InitProcesses(kmeans, &msgid, pids, process_cnt)) {
+    return FAILURE;
+  }
+
+  size_t changed = 0;
+  do {
+    // Начинаем фазу 1: сортировки точек по кластерам
+    PhaseSortClusters(kmeans, msgid, process_cnt, pids, &changed);
+    // Начинаем фазу 2: поиск центра для каждого кластера
+    PhaseFindCenter(kmeans, msgid, process_cnt, pids);
+  } while (((float)changed / (float)kmeans->points_cnt) > threshold);
+
+  for (size_t i = 0; i < process_cnt; ++i) {
+    if (kill(pids[i], SIGTERM)) {
+      msgctl(msgid, IPC_RMID, NULL);
+      return FAILURE;
+    }
+    printf("Killed %d\n", pids[i]);
+  }
+
+  if (msgctl(msgid, IPC_RMID, NULL)) {
+    return FAILURE;
+  }
+  return SUCCESS;
+}
+
+/**
+ * @brief Аккуратное удаление выделенной памяти
+ *
+ * @param kmeans
+ * @return int
+ */
+int DeletePoints(KMeans** kmeans) {
+  if ((kmeans == NULL) || (*kmeans == NULL)) {
+    return FAILURE;
+  }
+  int rtn = SUCCESS;
+  KMeans* tmp_kmeans = *kmeans;
+  if (tmp_kmeans->points != NULL) {
+    if (munmap(tmp_kmeans->points,
+               tmp_kmeans->points_cnt * sizeof(PointInCluster))) {
+      rtn = FAILURE;
+    }
+    tmp_kmeans->points = NULL;
+  }
+  if (tmp_kmeans->clusters != NULL) {
+    if (munmap(tmp_kmeans->clusters,
+               tmp_kmeans->clusters_cnt * sizeof(Point))) {
+      rtn = FAILURE;
+    }
+    tmp_kmeans->clusters = NULL;
+  }
+  if (munmap(tmp_kmeans, sizeof(KMeans))) {
+    rtn = FAILURE;
+  }
+  tmp_kmeans = NULL;
+
+  *kmeans = tmp_kmeans;
+  return rtn;
 }
 
 /**
@@ -105,7 +201,10 @@ int CreatPoints(KMeans** kmeans, char const* file_name) {
  * @param text
  * @return int
  */
-int SendMessage(int qid, long type, char* text) {
+int SendMessage(int qid, long type, char const* text) {
+  if (text == NULL) {
+    return FAILURE;
+  }
   static MsgBuf q_buf;
   q_buf.mtype = type;
   strcpy(q_buf.mtext, text);
@@ -121,12 +220,20 @@ int SendMessage(int qid, long type, char* text) {
  * @param qid
  * @param text
  * @param type
+ * @return int
  */
-void ReadMessage(int qid, char* text, long type) {
+int ReadMessage(int qid, char* text, long type) {
+  if (text == NULL) {
+    return FAILURE;
+  }
+
   static MsgBuf q_buf;
   q_buf.mtype = type;
-  msgrcv(qid, &q_buf, MAX_SEND_SIZE, type, 0);
+  if (msgrcv(qid, &q_buf, MAX_SEND_SIZE, type, 0) == -1) {
+    return FAILURE;
+  }
   strcpy(text, q_buf.mtext);
+  return SUCCESS;
 }
 
 /**
@@ -135,7 +242,11 @@ void ReadMessage(int qid, char* text, long type) {
  * @param msgid
  * @param kmeans
  */
-void StartChildWork(int msgid, KMeans* kmeans) {
+int StartChildWork(int msgid, KMeans* kmeans) {
+  if (kmeans == NULL) {
+    return FAILURE;
+  }
+
   char send_tmp[MAX_SEND_SIZE] = {0};
   char recv_tmp[MAX_SEND_SIZE] = {0};
   // Для синхронизации с родителем
@@ -144,7 +255,8 @@ void StartChildWork(int msgid, KMeans* kmeans) {
   signal(SIGTERM, Handler);
   raise(SIGSTOP);
   // Дочерние процессы работают как конечный автомат
-  while (1) {
+  int work_flag = 1;
+  while (work_flag) {
     switch (phase_num) {
       case 1:
         // Фаза 1: сортируем по кластерам
@@ -171,12 +283,14 @@ void StartChildWork(int msgid, KMeans* kmeans) {
         SendMessage(msgid, TO_PARENT_MSG, "ok");
         phase_num = 0;
         break;
+      case 3:
+        work_flag = 0;
+        break;
       default:
         break;
     }
   }
-  // Сюда 0 вероятность прийти, вырубает процесс родитель
-  exit(0);
+  return SUCCESS;
 }
 
 int InitProcesses(KMeans* kmeans,
@@ -196,7 +310,7 @@ int InitProcesses(KMeans* kmeans,
       // HACK: Стоит убить уже созданные процессы
       return FAILURE;
     } else if (pids[i] == 0) {
-      StartChildWork(*msgid, kmeans);
+      exit(StartChildWork(*msgid, kmeans));
     } else {
       printf("Created process = %d\n", pids[i]);
     }
@@ -218,7 +332,8 @@ int PhaseSortClusters(KMeans* kmeans,
                       size_t const process_cnt,
                       int const* pids,
                       size_t* changed) {
-  if ((kmeans == NULL) || (pids == NULL) || (changed == NULL)) {
+  if ((kmeans == NULL) || (pids == NULL) || (changed == NULL) ||
+      (process_cnt == 0)) {
     return FAILURE;
   }
 
@@ -253,7 +368,7 @@ int PhaseFindCenter(KMeans* kmeans,
                     int const msgid,
                     size_t const process_cnt,
                     int const* pids) {
-  if ((kmeans == NULL) || (pids == NULL)) {
+  if ((kmeans == NULL) || (pids == NULL) || (process_cnt == 0)) {
     return FAILURE;
   }
 
@@ -271,75 +386,5 @@ int PhaseFindCenter(KMeans* kmeans,
   for (size_t i = 0; i < process_cnt; ++i) {
     ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
   }
-  return SUCCESS;
-}
-
-/**
- * @brief Запуск алгоритма
- *
- * @param kmeans
- * @return int
- */
-int StartAlgorithm(KMeans* kmeans) {
-  if ((kmeans == NULL) || (kmeans->points_cnt == 0) ||
-      (kmeans->clusters_cnt == 0) ||
-      (kmeans->clusters_cnt > kmeans->points_cnt)) {
-    return FAILURE;
-  }
-  // За первые центры кластеров берутся первые точки из данных
-  for (size_t i = 0; i < kmeans->clusters_cnt; ++i) {
-    kmeans->clusters[i] = kmeans->points[i].point;
-  }
-
-  size_t process_cnt = kmeans->clusters_cnt;
-  int pids[process_cnt];
-  int msgid = 0;
-
-  if (InitProcesses(kmeans, &msgid, pids, process_cnt)) {
-    return FAILURE;
-  }
-
-  size_t changed = 0;
-  do {
-    // Начинаем фазу 1: сортировки точек по кластерам
-    PhaseSortClusters(kmeans, msgid, process_cnt, pids, &changed);
-    // Начинаем фазу 2: поиск центра для каждого кластера
-    PhaseFindCenter(kmeans, msgid, process_cnt, pids);
-  } while (((float)changed / (float)kmeans->points_cnt) > threshold);
-
-  for (size_t i = 0; i < process_cnt; ++i) {
-    // HACK: Стоит проверить на возврат с ошибкой
-    kill(pids[i], SIGTERM);
-    printf("Killed %d\n", pids[i]);
-  }
-  // HACK: Стоит проверить на возврат с ошибкой
-  msgctl(msgid, IPC_RMID, NULL);
-  return SUCCESS;
-}
-
-/**
- * @brief Аккуратное удаление выделенной памяти
- *
- * @param kmeans
- * @return int
- */
-int DeletePoints(KMeans** kmeans) {
-  if ((kmeans == NULL) || (*kmeans == NULL)) {
-    return FAILURE;
-  }
-  // HACK: Стоит проверять munmap на ошибку
-  KMeans* tmp_kmeans = *kmeans;
-  if (tmp_kmeans->points != NULL) {
-    munmap(tmp_kmeans->points, tmp_kmeans->points_cnt * sizeof(PointInCluster));
-    tmp_kmeans->points = NULL;
-  }
-  if (tmp_kmeans->clusters != NULL) {
-    munmap(tmp_kmeans->clusters, tmp_kmeans->clusters_cnt * sizeof(Point));
-    tmp_kmeans->clusters = NULL;
-  }
-  munmap(tmp_kmeans, sizeof(KMeans));
-  tmp_kmeans = NULL;
-
-  *kmeans = tmp_kmeans;
   return SUCCESS;
 }

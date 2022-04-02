@@ -6,7 +6,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "kmeans.h"
+#include "kmeans_multiprocess.h"
 }
 
 TEST(MULTIPROCESS_TESTS, CreatPoints_TEST) {
@@ -43,6 +43,63 @@ TEST(MULTIPROCESS_TESTS, StartAlgorithm_TEST) {
 TEST(MULTIPROCESS_TESTS, DeletePoints_TEST) {
   // Проверка на передачу NULL
   EXPECT_EQ(FAILURE, DeletePoints(NULL));
+}
+
+TEST(MULTIPROCESS_TESTS, SendMessage_TEST) {
+  char const* text = "";
+  // Проверка на передачу неверных данных
+  EXPECT_EQ(FAILURE, SendMessage(0, 0, NULL));
+  EXPECT_EQ(FAILURE, SendMessage(0, 0, text));
+}
+
+TEST(MULTIPROCESS_TESTS, ReadMessage_TEST) {
+  char* text = (char*)calloc(1, sizeof(char));
+  // Проверка на передачу неверных данных
+  EXPECT_EQ(FAILURE, ReadMessage(0, NULL, 0));
+  EXPECT_EQ(FAILURE, ReadMessage(0, text, 0));
+  // Освобождение памяти
+  free(text);
+}
+
+TEST(MULTIPROCESS_TESTS, StartChildWork_TEST) {
+  // Проверка на передачу NULL
+  EXPECT_EQ(FAILURE, StartChildWork(0, NULL));
+}
+
+TEST(MULTIPROCESS_TESTS, InitProcesses_TEST) {
+  KMeans* kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
+  int msgid = 0;
+  int pids[] = {0};
+  // Проверка на передачу NULL
+  EXPECT_EQ(FAILURE, InitProcesses(NULL, &msgid, pids, 0));
+  EXPECT_EQ(FAILURE, InitProcesses(kmeans, NULL, pids, 0));
+  EXPECT_EQ(FAILURE, InitProcesses(kmeans, &msgid, NULL, 0));
+  // Освобождение памяти
+  free(kmeans);
+}
+
+TEST(MULTIPROCESS_TESTS, PhaseSortClusters_TEST) {
+  KMeans* kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
+  size_t changed = 0;
+  int pids[] = {0};
+  // Проверка на передачу NULL
+  EXPECT_EQ(FAILURE, PhaseSortClusters(NULL, 0, 1, pids, &changed));
+  EXPECT_EQ(FAILURE, PhaseSortClusters(kmeans, 0, 1, NULL, &changed));
+  EXPECT_EQ(FAILURE, PhaseSortClusters(kmeans, 0, 1, pids, NULL));
+  EXPECT_EQ(FAILURE, PhaseSortClusters(kmeans, 0, 0, pids, &changed));
+  // Освобождение памяти
+  free(kmeans);
+}
+
+TEST(MULTIPROCESS_TESTS, PhaseFindCenter_TEST) {
+  KMeans* kmeans = (KMeans*)malloc(1 * sizeof(KMeans));
+  int pids[] = {0};
+  // Проверка на передачу NULL
+  EXPECT_EQ(FAILURE, PhaseFindCenter(NULL, 0, 1, pids));
+  EXPECT_EQ(FAILURE, PhaseFindCenter(kmeans, 0, 1, NULL));
+  EXPECT_EQ(FAILURE, PhaseFindCenter(kmeans, 0, 0, pids));
+  // Освобождение памяти
+  free(kmeans);
 }
 
 TEST(MULTIPROCESS_TESTS, MAIN_TEST) {
