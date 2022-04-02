@@ -75,7 +75,7 @@ static int CreatData(char const* file_name,
   size_t start_cluster = 0;
   size_t end_cluster = 0;
   const int shift = 2000;
-  const int dispersion = shift / 2;
+  const int dispersion = 1000;
   for (size_t i = 0; i < clusters_cnt; ++i) {
     start_cluster = end_cluster;
     // Таким подсчетом откусывается всегда "поровну" для всех оставшихся
@@ -97,7 +97,7 @@ static int CreatData(char const* file_name,
   }
   if (fclose(fptr)) {
     return FAILURE;
-  };
+  }
   return SUCCESS;
 }
 
