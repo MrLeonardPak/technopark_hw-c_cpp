@@ -11,7 +11,7 @@
 
 #include "kmeans.h"
 
-const float threshold = 0.01;
+const float threshold = 0.001;
 
 /**
  * @brief Создает специальную структуру из бинарного файла

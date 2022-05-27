@@ -12,7 +12,11 @@
 
 #include "kmeans_multiprocess.h"
 
-const float threshold = 0.1;
+#include <errno.h>
+
+extern int errno;
+
+const float threshold = 0.01;
 static int phase_num = 0;
 
 /**
@@ -158,6 +162,7 @@ int StartAlgorithm(KMeans* kmeans) {
       }
       return FAILURE;
     }
+    printf("Changed: %ld\n", changed);
   } while (((float)changed / (float)kmeans->points_cnt) > threshold);
   // Выключаем процессы, удаляем очередь
   for (size_t i = 0; i < process_cnt; ++i) {
@@ -244,6 +249,14 @@ int ReadMessage(int qid, char* text, long type) {
 
   static MsgBuf q_buf;
   q_buf.mtype = type;
+  // Как вариант с неблокирующим
+  // do {
+  //   errno = 0;
+  //   msgrcv(qid, &q_buf, MAX_SEND_SIZE, type, IPC_NOWAIT);
+  // } while (errno == ENOMSG);
+  // if (errno > 0) {
+  //   return FAILURE;
+  // }
   if (msgrcv(qid, &q_buf, MAX_SEND_SIZE, type, 0) == -1) {
     return FAILURE;
   }
@@ -274,29 +287,29 @@ int StartChildWork(int msgid, KMeans* kmeans) {
   while (work_flag) {
     switch (phase_num) {
       case 1:
+        phase_num = 0;
         // Фаза 1: сортируем по кластерам
         ReadMessage(msgid, recv_tmp, SORT_MSG);
         size_t start_batch = 0;
         size_t end_batch = 0;
         sscanf(recv_tmp, "%zu %zu", &start_batch, &end_batch);
-        printf("Received %zu %zu\n", start_batch, end_batch);
+        // printf("Received %zu %zu\n", start_batch, end_batch);
         size_t changed = 0;
         // Тут проверка возврата лишнее, тк всё необходимое же проверено
         ClusterSort(kmeans, start_batch, end_batch, &changed);
         snprintf(send_tmp, MAX_SEND_SIZE, "%zu", changed);
         SendMessage(msgid, TO_PARENT_MSG, send_tmp);
-        phase_num = 0;
         break;
       case 2:
+        phase_num = 0;
         // Фаза 2: Поиск центров кластеров
         ReadMessage(msgid, recv_tmp, CENTER_MSG);
         size_t cnt = 0;
         sscanf(recv_tmp, "%zu", &cnt);
-        printf("Received %zu\n", cnt);
+        // printf("Received %zu\n", cnt);
         // Тут проверка возврата лишнее, тк всё необходимое же проверено
         FindClusterCenter(kmeans, cnt);
         SendMessage(msgid, TO_PARENT_MSG, "ok");
-        phase_num = 0;
         break;
       case 3:
         work_flag = 0;
@@ -394,12 +407,15 @@ int PhaseSortClusters(KMeans* kmeans,
     if (SendMessage(msgid, SORT_MSG, send_tmp)) {
       return FAILURE;
     }
+    // printf("Send %zu %zu\n", start_batch, end_batch);
   }
   size_t changed_tmp = 0;
   *changed = 0;
   // Ожидаем результат от дочерних процессов
   for (size_t i = 0; i < process_cnt; ++i) {
-    ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
+    if (ReadMessage(msgid, recv_tmp, TO_PARENT_MSG)) {
+      return FAILURE;
+    }
     sscanf(recv_tmp, "%zu", &changed_tmp);
     *changed += changed_tmp;
   }
@@ -437,10 +453,13 @@ int PhaseFindCenter(KMeans* kmeans,
     if (SendMessage(msgid, CENTER_MSG, send_tmp)) {
       return FAILURE;
     }
+    // printf("Send %zu\n", i);
   }
   // Ожидаем ответ от дочерних процессов
   for (size_t i = 0; i < process_cnt; ++i) {
-    ReadMessage(msgid, recv_tmp, TO_PARENT_MSG);
+    if (ReadMessage(msgid, recv_tmp, TO_PARENT_MSG)) {
+      return FAILURE;
+    }
   }
   return SUCCESS;
 }
